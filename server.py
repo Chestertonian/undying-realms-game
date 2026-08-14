@@ -25,7 +25,7 @@ async def handle_client(reader: asyncio.StreamReader, writer: asyncio.StreamWrit
     conn = TCPConnection(reader, writer)
     log.info("Connection opened: %s", peer)
 
-    await conn.send("Welcome. This is a placeholder — type anything, 'quit' to disconnect.")
+    await conn.send("Welcome. This is a placeholder; type anything, 'quit' to disconnect.")
 
     async for line in conn:
         if line.strip().lower() == "quit":

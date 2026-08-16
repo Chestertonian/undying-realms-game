@@ -102,10 +102,8 @@ class LoginHandler:
         self.account = await load_account(self.pending_username)
         self.state = LoginState.CHARACTER_MENU
         return True
-
-    async def request_password_mode(self, masked: bool) -> None:
-        pass  # TODO: telnet IAC WILL/WONT ECHO — deferred
-
+    
+    
     async def _handle_new_account_confirm(self):
         await self.conn.send(f"No account '{self.pending_username}'. Create it? (y/n)")
         raw = await self.conn.receive_line()

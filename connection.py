@@ -29,6 +29,9 @@ class Connection(Protocol):
     async def close(self) -> None:
         """Close the connection."""
         ...
+        
+    async def request_password_mode(self, masked: bool) -> None:
+        pass  # TODO: telnet IAC WILL/WONT ECHO — deferred
 
     def __aiter__(self) -> AsyncIterator[str]:
         ...
@@ -80,3 +83,6 @@ class TCPConnection:
             if line is None:
                 return
             yield line
+            
+    async def request_password_mode(self, masked: bool) -> None:
+        pass  # TODO: telnet IAC WILL/WONT ECHO — deferred

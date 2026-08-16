@@ -25,6 +25,7 @@ class Player:
     account_id: int
     name: str
     race: str
+    gender: str
     background: str
     stats: dict[str, int]
     room_id: int | None
@@ -56,7 +57,7 @@ async def name_is_taken(name: str) -> bool:
 async def load_characters_for_account(account_id: int) -> list[Player]:
     pool = db.get_pool()
     rows = await pool.fetch(
-        "SELECT id, account_id, name, race, background, stats, room_id, created_at "
+        "SELECT id, account_id, name, race, gender, background, stats, room_id, created_at "
         "FROM players WHERE account_id = $1 ORDER BY created_at",
         account_id,
     )
@@ -66,7 +67,7 @@ async def load_characters_for_account(account_id: int) -> list[Player]:
 async def load_player(player_id: int) -> Player | None:
     pool = db.get_pool()
     row = await pool.fetchrow(
-        "SELECT id, account_id, name, race, background, stats, room_id, created_at "
+        "SELECT id, account_id, name, race, gender, background, stats, room_id, created_at "
         "FROM players WHERE id = $1",
         player_id,
     )
@@ -79,18 +80,20 @@ async def create_player(
     account_id: int,
     name: str,
     race: str,
+    gender: str,
     background: str,
     stats: dict[str, int],
 ) -> Player:
     pool = db.get_pool()
     try:
         row = await pool.fetchrow(
-            "INSERT INTO players (account_id, name, race, background, stats, room_id) "
-            "VALUES ($1, $2, $3, $4, $5, $6) "
-            "RETURNING id, account_id, name, race, background, stats, room_id, created_at",
+            "INSERT INTO players (account_id, name, race, gender, background, stats, room_id) "
+            "VALUES ($1, $2, $3, $4, $5, $6, $7) "
+            "RETURNING id, account_id, name, race, gender, background, stats, room_id, created_at",
             account_id,
             name,
             race,
+            gender,
             background,
             stats,
             STARTING_ROOM_ID,

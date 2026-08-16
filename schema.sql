@@ -15,6 +15,7 @@ CREATE TABLE players (
     name          TEXT UNIQUE NOT NULL,
     race          TEXT NOT NULL,
     background    TEXT NOT NULL,
+    gender        TEXT NOT NULL,
     stats         JSONB NOT NULL,
     room_id       INTEGER,
     created_at    TIMESTAMPTZ NOT NULL DEFAULT now()

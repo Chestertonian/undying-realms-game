@@ -14,27 +14,8 @@ from typing import Awaitable, Callable, Optional
 from connection import Connection
 
 from accounts import *
-from players import *
-
-# --- These don't exist yet; stubbed here as the expected interface. ---
-# accounts.py:
-#   async def account_exists(username: str) -> bool
-#   async def load_account(username: str) -> Account
-#   async def verify_password(username: str, password: str) -> bool
-#   async def create_account(username: str, password: str) -> Account
-#
-# characters.py / character_creation.py:
-#   async def load_characters_for_account(account_id: int) -> list[Player]
-#   class CharacterCreationHandler: async def run(self, account_id: int) -> Player
-#
-# registry.py:
-#   registry.is_online(player_id) -> bool
-#   await registry.kick(player_id)
-#
-# player.py / accounts.py:
-#   class Account: id: int, username: str, ...
-#   class Player: id: int, name: str, ...
-
+from player import load_characters_for_account
+from registry import registry
 
 class LoginState(Enum):
     USERNAME = auto()
@@ -121,6 +102,9 @@ class LoginHandler:
         self.account = await load_account(self.pending_username)
         self.state = LoginState.CHARACTER_MENU
         return True
+
+    async def request_password_mode(self, masked: bool) -> None:
+        pass  # TODO: telnet IAC WILL/WONT ECHO — deferred
 
     async def _handle_new_account_confirm(self):
         await self.conn.send(f"No account '{self.pending_username}'. Create it? (y/n)")

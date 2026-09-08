@@ -3,8 +3,7 @@ MUD server entrypoint.
 
 Accepts telnet-compatible TCP connections, runs each one through login/
 character selection, then registers the resulting player in the live
-connection registry. No game loop yet — post-login is a placeholder
-until rooms/dispatch exist.
+connection registry.
 """
 
 from __future__ import annotations

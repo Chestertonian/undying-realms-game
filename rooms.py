@@ -10,6 +10,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
+from registry import registry
+
+from connection import Connection
+
 from db import get_pool
 
 
@@ -54,3 +58,11 @@ async def load_rooms() -> None:
             raise ValueError(f"Exit references unknown target_room_id {target_id}")
 
         rooms[room_id].exits[row["direction"]] = rooms[target_id]
+        
+async def broadcast_to_room(room_id: int, message: str, exclude: list[Connection] | None = None) -> None:
+    exclude = exclude or []
+    for conn in registry.connections():
+        player = conn.player
+        if player is None or player.current_room_id != room_id or conn in exclude:
+            continue
+        await conn.send(message)

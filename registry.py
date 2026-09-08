@@ -13,6 +13,8 @@ from __future__ import annotations
 
 from connection import Connection
 
+from typing import Iterable
+
 
 class ConnectionRegistry:
     def __init__(self) -> None:
@@ -43,8 +45,12 @@ class ConnectionRegistry:
         if conn is None:
             return
         await conn.send("You have been disconnected: logged in elsewhere.")
+        conn.player = None
         await conn.close()
         self.unregister(player_id)
+    
+    def connections(self) -> Iterable[Connection]:
+        return self._connections.values()
 
 
 # Single shared instance, module-level — mirrors db.py's pattern of

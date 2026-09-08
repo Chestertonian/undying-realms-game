@@ -11,13 +11,17 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime
 
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from rooms import Room
+
 import asyncpg
 
 import db
 from races import RACES
+from rooms import rooms
 
-STARTING_ROOM_ID = None  # TODO: set once the rooms table/seed data exists
-
+STARTING_ROOM_ID = 1  # spawn point for newly created characters
 
 @dataclass
 class Player:
@@ -28,9 +32,12 @@ class Player:
     gender: str
     background: str
     stats: dict[str, int]
-    room_id: int | None
+    current_room_id: int
     created_at: datetime
-
+    
+    @property
+    def room(self) -> Room:
+        return rooms[self.current_room_id]
 
 def apply_race_modifiers(base_stats: dict[str, int], race: str) -> dict[str, int]:
     """
@@ -57,7 +64,7 @@ async def name_is_taken(name: str) -> bool:
 async def load_characters_for_account(account_id: int) -> list[Player]:
     pool = db.get_pool()
     rows = await pool.fetch(
-        "SELECT id, account_id, name, race, gender, background, stats, room_id, created_at "
+        "SELECT id, account_id, name, race, gender, background, stats, current_room_id, created_at "
         "FROM players WHERE account_id = $1 ORDER BY created_at",
         account_id,
     )
@@ -67,7 +74,7 @@ async def load_characters_for_account(account_id: int) -> list[Player]:
 async def load_player(player_id: int) -> Player | None:
     pool = db.get_pool()
     row = await pool.fetchrow(
-        "SELECT id, account_id, name, race, gender, background, stats, room_id, created_at "
+        "SELECT id, account_id, name, race, gender, background, stats, current_room_id, created_at "
         "FROM players WHERE id = $1",
         player_id,
     )
@@ -87,9 +94,9 @@ async def create_player(
     pool = db.get_pool()
     try:
         row = await pool.fetchrow(
-            "INSERT INTO players (account_id, name, race, gender, background, stats, room_id) "
+            "INSERT INTO players (account_id, name, race, gender, background, stats, current_room_id) "
             "VALUES ($1, $2, $3, $4, $5, $6, $7) "
-            "RETURNING id, account_id, name, race, gender, background, stats, room_id, created_at",
+            "RETURNING id, account_id, name, race, gender, background, stats, current_room_id, created_at",
             account_id,
             name,
             race,

@@ -17,6 +17,7 @@ from connection import TCPConnection
 from login_handler import LoginHandler
 from registry import registry
 from rooms import load_rooms
+from commands import *
 
 HOST = "0.0.0.0"
 PORT = 4000
@@ -42,16 +43,14 @@ async def handle_client(reader: asyncio.StreamReader, writer: asyncio.StreamWrit
         return
 
     registry.register(player.id, conn)
+    conn.player = player
     log.info("Player '%s' logged in from %s", player.name, peer)
 
-    # No game loop yet — placeholder so the connection doesn't just hang
-    # or drop immediately after login. Replace once rooms/dispatch exist.
-    await conn.send(f"Welcome, {player.name}. (More coming soon!)")
+    await cmd_look(conn, "")  # show the starting room on entry
     async for line in conn:
-        if line.strip().lower() == "quit":
-            await conn.send("Goodbye.")
+        await dispatch(conn, line)
+        if conn.player is None:  # quit was issued
             break
-        await conn.send(f"You said: {line}")
 
     registry.unregister(player.id)
     await conn.close()

@@ -10,10 +10,12 @@ from __future__ import annotations
 
 import asyncio
 from typing import AsyncIterator, Protocol
+from player import Player
 
 
 class Connection(Protocol):
     """Minimal interface the game loop depends on."""
+    player: Player | None
 
     async def send(self, text: str) -> None:
         """Send a line of text to the client."""
@@ -44,13 +46,14 @@ class TCPConnection:
         self._reader = reader
         self._writer = writer
         self._closed = False
+        self.player: Player | None = None
 
-        async def send(self, text: str) -> None:
-            if self._closed:
-                return
-            # \r\n is the conventional line ending for telnet-style clients.
-            self._writer.write((text + "\r\n").encode("utf-8", errors="replace"))
-            await self._writer.drain()
+    async def send(self, text: str) -> None:
+        if self._closed:
+            return
+        # \r\n is the conventional line ending for telnet-style clients.
+        self._writer.write((text + "\r\n").encode("utf-8", errors="replace"))
+        await self._writer.drain()
 
     async def receive_line(self) -> str | None:
         if self._closed:

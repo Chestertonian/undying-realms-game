@@ -17,6 +17,7 @@ from registry import registry
 from social import cmd_say, cmd_emote
 from channels import cmd_chat 
 from movement import MOVEMENT_COMMANDS
+from info import cmd_who
 
 from rooms import describe_room_to
 
@@ -39,6 +40,7 @@ COMMAND_TABLE: dict[str, CommandHandler] = {
     "chat": cmd_chat,
     "emote": cmd_emote,
     ";": cmd_emote,
+    "who": cmd_who,
     **MOVEMENT_COMMANDS,
 }
 

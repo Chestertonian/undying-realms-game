@@ -51,6 +51,11 @@ class ConnectionRegistry:
     
     def connections(self) -> Iterable[Connection]:
         return self._connections.values()
+    
+    async def broadcast_to_all(self, message: str) -> None:
+        for conn in self._connections.values():
+            if conn.player is not None:
+                await conn.send(message)
 
 
 # Single shared instance, module-level — mirrors db.py's pattern of

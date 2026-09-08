@@ -46,7 +46,9 @@ async def handle_client(reader: asyncio.StreamReader, writer: asyncio.StreamWrit
     registry.register(player.id, conn)
     conn.player = player
     log.info("Player '%s' logged in from %s", player.name, peer)
-    
+
+    await registry.broadcast_to_all(f"\x1b[33m<< {player.name} has entered the game. >>\x1b[0m")
+
     await cmd_look(conn, "")
     await conn.send_raw("> ")
     async for line in conn:

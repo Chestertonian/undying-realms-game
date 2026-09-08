@@ -23,12 +23,24 @@ async def cmd_who(connection: Connection, args: str) -> None:
         key=lambda p: p.name.lower(),
     )
 
-    await connection.send("==== Adventurers online ====")
-    for p in players:
-        await connection.send(f"{p.name}, {p.gender.capitalize()} {p.race.capitalize()}")
+    rows = [(p.name, p.gender.capitalize(), p.race.capitalize()) for p in players]
 
-    count = len(players)
+    name_w = max((len(r[0]) for r in rows), default=4)
+    gender_w = max((len(r[1]) for r in rows), default=6)
+
+    header = " Adventurers Online "
+    width = max(len(header) + 4, name_w + gender_w + 12)
+    border = "=" * width
+
+    await connection.send(border)
+    await connection.send(header.center(width, "="))
+    await connection.send(border)
+
+    for name, gender, race in rows:
+        line = f"  {name.ljust(name_w)}   {gender.ljust(gender_w)}   {race}"
+        await connection.send(line)
+
+    count = len(rows)
     noun = "player" if count == 1 else "players"
-    summary = f"{_count_word(count)} {noun} online."
-    await connection.send(summary.rjust(len(summary) + 15))
-    await connection.send("=======================")
+    await connection.send(border)
+    await connection.send(f"{_count_word(count)} {noun} online.".center(width))

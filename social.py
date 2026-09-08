@@ -16,7 +16,11 @@ def find_player_in_room(room_id: int, name: str) -> Connection | None:
     name = name.lower()
     for conn in registry.connections():
         player = conn.player
-        if player is not None and player.current_room_id == room_id and player.name.lower() == name:
+        if (
+            player is not None
+            and player.current_room_id == room_id
+            and player.name.lower() == name
+        ):
             return conn
     return None
 
@@ -43,6 +47,12 @@ async def cmd_say(connection: Connection, args: str) -> None:
             await connection.send(f"There's no one here named '{target_name}'.")
             return
 
+        if target_conn is connection:
+            await connection.send(
+                "You can't say something to yourself. Well, you can, but it's odd."
+            )
+            return
+
         target_player = target_conn.player
         await connection.send(f'You say to {target_player.name}, "{message}"')
         await target_conn.send(f'{player.name} says to you, "{message}"')
@@ -54,4 +64,6 @@ async def cmd_say(connection: Connection, args: str) -> None:
         return
 
     await connection.send(f'You say, "{args}"')
-    await broadcast_to_room(room_id, f'{player.name} says, "{args}"', exclude=[connection])
+    await broadcast_to_room(
+        room_id, f'{player.name} says, "{args}"', exclude=[connection]
+    )

@@ -22,7 +22,7 @@ class LoginState(Enum):
     PASSWORD = auto()
     NEW_ACCOUNT_CONFIRM = auto()
     NEW_ACCOUNT_PASSWORD = auto()
-    CHARACTER_MENU = auto()
+    CHARACTER_MENU = auto() 
     CHARACTER_CREATE = auto()
     DONE = auto()
 

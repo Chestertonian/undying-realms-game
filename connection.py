@@ -45,12 +45,12 @@ class TCPConnection:
         self._writer = writer
         self._closed = False
 
-    async def send(self, text: str) -> None:
-        if self._closed:
-            return
-        # \r\n is the conventional line ending for telnet-style clients.
-        self._writer.write((text + "\r\n").encode("utf-8", errors="replace"))
-        await self._writer.drain()
+        async def send(self, text: str) -> None:
+            if self._closed:
+                return
+            # \r\n is the conventional line ending for telnet-style clients.
+            self._writer.write((text + "\r\n").encode("utf-8", errors="replace"))
+            await self._writer.drain()
 
     async def receive_line(self) -> str | None:
         if self._closed:

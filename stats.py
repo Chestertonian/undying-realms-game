@@ -25,14 +25,6 @@ def roll_stats() -> list[int]:
 
 
 class StatRoller:
-    """
-    Tracks reroll count across a single character-creation session.
-
-    A fresh instance should be created per character being made — the
-    10-reroll cap is per character, not per account or lifetime, per
-    design discussion (resets every time someone starts creating a new
-    character).
-    """
 
     def __init__(self) -> None:
         self.rerolls_used = 0

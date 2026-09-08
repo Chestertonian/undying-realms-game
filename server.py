@@ -16,6 +16,7 @@ import db
 from connection import TCPConnection
 from login_handler import LoginHandler
 from registry import registry
+from rooms import load_rooms
 
 HOST = "0.0.0.0"
 PORT = 4000
@@ -60,6 +61,8 @@ async def handle_client(reader: asyncio.StreamReader, writer: asyncio.StreamWrit
 async def main() -> None:
     await db.init_pool()
     log.info("Database pool initialized.")
+    await load_rooms()
+    log.info("Rooms loaded.")
 
     server = await asyncio.start_server(handle_client, HOST, PORT)
     addrs = ", ".join(str(sock.getsockname()) for sock in server.sockets)

@@ -16,30 +16,14 @@ from registry import registry
 
 from social import cmd_say, cmd_emote
 from channels import cmd_chat 
+from movement import MOVEMENT_COMMANDS
 
-CommandHandler = Callable[[Connection, str], Awaitable[None]]
+from rooms import describe_room_to
 
+from command_types import CommandHandler
 
 async def cmd_look(connection: Connection, args: str) -> None:
-    room = connection.player.room
-    await connection.send(room.name)
-    await connection.send(room.description)
-    
-    others = [
-        conn.player.name
-        for conn in registry.connections()
-        if conn.player is not None
-        and conn is not connection
-        and conn.player.current_room_id == room.id
-    ]
-    
-    if others:
-        await connection.send("\n".join(name + "." for name in sorted(others)))
-
-    if room.exits:
-        await connection.send("Exits: " + ", ".join(sorted(room.exits)))
-    else:
-        await connection.send("There are no obvious exits.")
+    await describe_room_to(connection, connection.player.room)
 
 
 async def cmd_quit(connection: Connection, args: str) -> None:
@@ -54,6 +38,7 @@ COMMAND_TABLE: dict[str, CommandHandler] = {
     "chat": cmd_chat,
     "emote": cmd_emote,
     ";": cmd_emote,
+    **MOVEMENT_COMMANDS,
 }
 
 

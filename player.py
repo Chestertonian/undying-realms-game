@@ -20,6 +20,7 @@ import asyncpg
 import db
 from races import RACES
 from rooms import rooms
+from registry import registry
 
 STARTING_ROOM_ID = 1  # spawn point for newly created characters
 
@@ -34,6 +35,7 @@ class Player:
     stats: dict[str, int]
     current_room_id: int
     created_at: datetime
+    dirty: bool = False
     
     @property
     def room(self) -> Room:
@@ -112,3 +114,23 @@ async def create_player(
         raise ValueError(f"Character creation failed: {exc}") from exc
 
     return Player(**dict(row))
+
+async def flush_dirty_players() -> None:
+    """
+    Write current_room_id for every online player marked dirty, then
+    clear the flag. Scans live connections rather than maintaining a
+    separate "dirty players" set -- consistent with the scan-on-demand
+    pattern used elsewhere (room occupancy), and correct here specifically
+    because only online players can ever be dirty in the first place.
+    """
+    pool = db.get_pool()
+    for conn in registry.connections():
+        player = conn.player
+        if player is None or not player.dirty:
+            continue
+        await pool.execute(
+            "UPDATE players SET current_room_id = $1 WHERE id = $2",
+            player.current_room_id,
+            player.id,
+        )
+        player.dirty = False

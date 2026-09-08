@@ -66,3 +66,22 @@ async def broadcast_to_room(room_id: int, message: str, exclude: list[Connection
         if player is None or player.current_room_id != room_id or conn in exclude:
             continue
         await conn.send(message)
+        
+async def describe_room_to(connection: Connection, room: Room) -> None:
+    await connection.send(room.name)
+    await connection.send(room.description)
+
+    others = [
+        conn.player.name
+        for conn in registry.connections()
+        if conn.player is not None
+        and conn is not connection
+        and conn.player.current_room_id == room.id
+    ]
+    if others:
+        await connection.send("Also here: " + ", ".join(sorted(others)))
+
+    if room.exits:
+        await connection.send("Exits: " + ", ".join(sorted(room.exits)))
+    else:
+        await connection.send("There are no obvious exits.")

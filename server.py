@@ -18,6 +18,8 @@ from registry import registry
 from rooms import load_rooms
 from commands import *
 
+from persistence import flush_loop
+
 HOST = "0.0.0.0"
 PORT = 4000
 
@@ -63,6 +65,8 @@ async def main() -> None:
     log.info("Database pool initialized.")
     await load_rooms()
     log.info("Rooms loaded.")
+    flush_task = asyncio.create_task(flush_loop())
+    log.info("Flush loop started.")
 
     server = await asyncio.start_server(handle_client, HOST, PORT)
     addrs = ", ".join(str(sock.getsockname()) for sock in server.sockets)
@@ -72,6 +76,7 @@ async def main() -> None:
         async with server:
             await server.serve_forever()
     finally:
+        flush_task.cancel()
         await db.close_pool()
 
 

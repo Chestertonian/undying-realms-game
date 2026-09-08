@@ -34,7 +34,7 @@ async def cmd_look(connection: Connection, args: str) -> None:
     ]
     
     if others:
-        await connection.send("Also here: " + ", ".join(sorted(others)))
+        await connection.send("\n".join(name + "." for name in sorted(others)))
 
     if room.exits:
         await connection.send("Exits: " + ", ".join(sorted(room.exits)))

@@ -12,7 +12,7 @@ from typing import Awaitable, Callable
 
 from connection import Connection
 
-from social import cmd_say
+from social import cmd_say, cmd_emote
 from channels import cmd_chat 
 
 CommandHandler = Callable[[Connection, str], Awaitable[None]]
@@ -38,6 +38,8 @@ COMMAND_TABLE: dict[str, CommandHandler] = {
     "quit": cmd_quit,
     "say":  cmd_say,
     "chat": cmd_chat,
+    "emote": cmd_emote,
+    ";": cmd_emote,
 }
 
 

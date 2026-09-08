@@ -42,15 +42,16 @@ async def cmd_say(connection: Connection, args: str) -> None:
             await connection.send("Say what, to whom?")
             return
 
+        if message[-1] not in ".!?":
+            message += "."
+
         target_conn = find_player_in_room(room_id, target_name)
         if target_conn is None:
             await connection.send(f"There's no one here named '{target_name}'.")
             return
 
         if target_conn is connection:
-            await connection.send(
-                "You can't say something to yourself. Well, you can, but it's odd."
-            )
+            await connection.send("You can't say something to yourself. Well, you can, but it's odd.")
             return
 
         target_player = target_conn.player
@@ -63,7 +64,21 @@ async def cmd_say(connection: Connection, args: str) -> None:
         )
         return
 
+    if args[-1] not in ".!?":
+        args += "."
+
     await connection.send(f'You say, "{args}"')
-    await broadcast_to_room(
-        room_id, f'{player.name} says, "{args}"', exclude=[connection]
-    )
+    await broadcast_to_room(room_id, f'{player.name} says, "{args}"', exclude=[connection])
+
+async def cmd_emote(connection: Connection, args: str) -> None:
+    args = args.strip()
+    if not args:
+        await connection.send("Emote what?")
+        return
+
+    if args[-1] not in ".!?":
+        args += "."
+
+    player = connection.player
+    message = f"{player.name} {args}"
+    await broadcast_to_room(player.current_room_id, message)  # no exclude — sender sees it too

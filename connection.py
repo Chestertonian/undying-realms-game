@@ -9,8 +9,10 @@ add a WebSocket transport later without touching dispatch/room/player code.
 from __future__ import annotations
 
 import asyncio
-from typing import AsyncIterator, Protocol
-from player import Player
+from typing import AsyncIterator, Protocol, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from player import Player
 
 
 class Connection(Protocol):

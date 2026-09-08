@@ -33,6 +33,7 @@ async def cmd_quit(connection: Connection, args: str) -> None:
 
 COMMAND_TABLE: dict[str, CommandHandler] = {
     "look": cmd_look,
+    "l":    cmd_look,
     "quit": cmd_quit,
     "say":  cmd_say,
     "chat": cmd_chat,

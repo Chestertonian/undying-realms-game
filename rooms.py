@@ -79,7 +79,7 @@ async def describe_room_to(connection: Connection, room: Room) -> None:
         and conn.player.current_room_id == room.id
     ]
     if others:
-        await connection.send("Also here: " + ", ".join(sorted(others)))
+        await connection.send("\n".join(f"{name}." for name in sorted(others)))
 
     if room.exits:
         await connection.send("Exits: " + ", ".join(sorted(room.exits)))

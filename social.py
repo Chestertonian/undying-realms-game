@@ -41,7 +41,8 @@ async def cmd_say(connection: Connection, args: str) -> None:
         if not target_name or not message:
             await connection.send("Say what, to whom?")
             return
-
+        if message:
+            message = message[0].upper() + message[1:]
         if message[-1] not in ".!?":
             message += "."
 
@@ -63,7 +64,10 @@ async def cmd_say(connection: Connection, args: str) -> None:
             exclude=[connection, target_conn],
         )
         return
-
+    
+    if args:
+        args = args[0].upper() + args[1:]
+        
     if args[-1] not in ".!?":
         args += "."
 

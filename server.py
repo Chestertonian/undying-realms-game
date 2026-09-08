@@ -44,12 +44,14 @@ async def handle_client(reader: asyncio.StreamReader, writer: asyncio.StreamWrit
     registry.register(player.id, conn)
     conn.player = player
     log.info("Player '%s' logged in from %s", player.name, peer)
-
-    await cmd_look(conn, "")  # show the starting room on entry
+    
+    await cmd_look(conn, "")
+    await conn.send_raw("> ")
     async for line in conn:
         await dispatch(conn, line)
-        if conn.player is None:  # quit was issued
+        if conn.player is None:
             break
+        await conn.send_raw("> ")
 
     registry.unregister(player.id)
     await conn.close()

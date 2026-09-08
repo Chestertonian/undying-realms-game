@@ -12,6 +12,8 @@ from typing import Awaitable, Callable
 
 from connection import Connection
 
+from registry import registry
+
 from social import cmd_say, cmd_emote
 from channels import cmd_chat 
 
@@ -22,6 +24,18 @@ async def cmd_look(connection: Connection, args: str) -> None:
     room = connection.player.room
     await connection.send(room.name)
     await connection.send(room.description)
+    
+    others = [
+        conn.player.name
+        for conn in registry.connections()
+        if conn.player is not None
+        and conn is not connection
+        and conn.player.current_room_id == room.id
+    ]
+    
+    if others:
+        await connection.send("Also here: " + ", ".join(sorted(others)))
+
     if room.exits:
         await connection.send("Exits: " + ", ".join(sorted(room.exits)))
     else:

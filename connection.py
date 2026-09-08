@@ -29,6 +29,12 @@ class Connection(Protocol):
         Returns None if the connection has closed.
         """
         ...
+        
+    async def send_raw(self, text: str) -> None:
+        """Send text with no line ending appended — for prompts and
+        anything else that needs to stay on the same line as further
+        output or client input."""
+        ...
 
     async def close(self) -> None:
         """Close the connection."""
@@ -68,6 +74,12 @@ class TCPConnection:
             # EOF: client disconnected.
             return None
         return raw.decode("utf-8", errors="replace").rstrip("\r\n")
+    
+    async def send_raw(self, text: str) -> None:
+        if self._closed:
+            return
+        self._writer.write(text.encode("utf-8", errors="replace"))
+        await self._writer.drain()
 
     async def close(self) -> None:
         if self._closed:

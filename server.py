@@ -37,6 +37,10 @@ async def handle_client(reader: asyncio.StreamReader, writer: asyncio.StreamWrit
     except ConnectionAbortedError:
         # Connection dropped mid-login (e.g. during character creation).
         player = None
+    except Exception:
+        log.exception("Unhandled error during login for %s", peer)
+        await conn.close()
+        return
 
     if player is None:
         log.info("Connection closed before login completed: %s", peer)
@@ -52,7 +56,11 @@ async def handle_client(reader: asyncio.StreamReader, writer: asyncio.StreamWrit
     await cmd_look(conn, "")
     await conn.send_raw("> ")
     async for line in conn:
-        await dispatch(conn, line)
+        try:
+            await dispatch(conn, line)
+        except Exception:
+            log.exception("Unhandled error dispatching command %r for player '%s'", line, player.name)
+            await conn.send("Something went wrong processing that command. It's been logged.")
         if conn.player is None:
             break
         await conn.send_raw("> ")

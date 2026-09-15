@@ -19,7 +19,7 @@ from registry import registry
 
 import logging
 
-logger = logging.getLogger(__name__)
+log = logging.getLogger(__name__)
 
 class LoginState(Enum):
     USERNAME = auto()

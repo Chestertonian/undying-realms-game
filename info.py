@@ -44,3 +44,39 @@ async def cmd_who(connection: Connection, args: str) -> None:
     noun = "player" if count == 1 else "players"
     await connection.send(border)
     await connection.send(f"{_count_word(count)} {noun} online.".center(width))
+    
+async def cmd_hp(connection: Connection, args: str) -> None:
+    p = connection.player
+    await connection.send(f"HP: {p.current_hp}/{p.max_hp}   SP: {p.current_sp}/{p.max_sp}   EP: {p.current_ep}/{p.max_ep}")
+
+
+async def cmd_score(connection: Connection, args: str) -> None:
+    p = connection.player
+    width = 44
+
+    def row(label: str, value: str) -> str:
+        return f"  {label:<12}{value}"
+
+    lines = [
+        "=" * width,
+        " Character Sheet ".center(width, "="),
+        "=" * width,
+        row("Name:", p.name),
+        row("Race:", p.race.capitalize()),
+        row("Gender:", p.gender.capitalize()),
+        row("Background:", p.background),
+        "-" * width,
+        row("STR:", str(p.stats["STR"])),
+        row("DEX:", str(p.stats["DEX"])),
+        row("CON:", str(p.stats["CON"])),
+        row("INT:", str(p.stats["INT"])),
+        row("WIS:", str(p.stats["WIS"])),
+        row("CHA:", str(p.stats["CHA"])),
+        "-" * width,
+        row("HP:", f"{p.current_hp}/{p.max_hp}"),
+        row("SP:", f"{p.current_sp}/{p.max_sp}"),
+        row("EP:", f"{p.current_ep}/{p.max_ep}"),
+        "=" * width,
+    ]
+    for line in lines:
+        await connection.send(line)

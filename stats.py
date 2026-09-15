@@ -63,3 +63,17 @@ def assign_stats(rolled_values: list[int], assignment: dict[str, int]) -> dict[s
         raise ValueError("Assigned values must exactly match the rolled values.")
 
     return dict(assignment)
+
+def compute_max_hp(stats: dict[str, int]) -> int:
+    # TODO: build actual formula
+    return 20 + stats["CON"] * 2
+
+
+def compute_max_sp(stats: dict[str, int]) -> int:
+    # TODO: build actual formula
+    return 10 + stats["WIS"] * 2
+
+
+def compute_max_ep(stats: dict[str, int]) -> int:
+    # TODO: build actual formula
+    return 15 + stats["DEX"] * 2

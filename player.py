@@ -22,6 +22,9 @@ from races import RACES
 from rooms import rooms
 from registry import registry
 
+from stats import compute_max_hp, compute_max_sp, compute_max_ep
+
+
 STARTING_ROOM_ID = 1  # spawn point for newly created characters
 
 @dataclass
@@ -35,6 +38,12 @@ class Player:
     stats: dict[str, int]
     current_room_id: int
     created_at: datetime
+    current_hp: int
+    max_hp: int
+    current_sp: int
+    max_sp: int
+    current_ep: int
+    max_ep: int
     dirty: bool = False
     
     @property
@@ -84,7 +93,6 @@ async def load_player(player_id: int) -> Player | None:
         return None
     return Player(**dict(row))
 
-
 async def create_player(
     account_id: int,
     name: str,
@@ -94,23 +102,23 @@ async def create_player(
     stats: dict[str, int],
 ) -> Player:
     pool = db.get_pool()
+
+    max_hp = compute_max_hp(stats)
+    max_sp = compute_max_sp(stats)
+    max_ep = compute_max_ep(stats)
+
     try:
         row = await pool.fetchrow(
-            "INSERT INTO players (account_id, name, race, gender, background, stats, current_room_id) "
-            "VALUES ($1, $2, $3, $4, $5, $6, $7) "
-            "RETURNING id, account_id, name, race, gender, background, stats, current_room_id, created_at",
-            account_id,
-            name,
-            race,
-            gender,
-            background,
-            stats,
-            STARTING_ROOM_ID,
+            "INSERT INTO players "
+            "(account_id, name, race, gender, background, stats, current_room_id, "
+            " current_hp, max_hp, current_sp, max_sp, current_ep, max_ep) "
+            "VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) "
+            "RETURNING id, account_id, name, race, gender, background, stats, current_room_id, "
+            "created_at, current_hp, max_hp, current_sp, max_sp, current_ep, max_ep",
+            account_id, name, race, gender, background, stats, STARTING_ROOM_ID,
+            max_hp, max_hp, max_sp, max_sp, max_ep, max_ep,
         )
     except asyncpg.UniqueViolationError as exc:
-        # Character name already taken; caller is expected to have already
-        # checked name_is_taken(), so this is a safety net against races,
-        # same pattern as create_account() in accounts.py.
         raise ValueError(f"Character creation failed: {exc}") from exc
 
     return Player(**dict(row))

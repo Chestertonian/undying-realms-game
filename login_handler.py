@@ -17,6 +17,10 @@ from accounts import *
 from player import load_characters_for_account
 from registry import registry
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 class LoginState(Enum):
     USERNAME = auto()
     PASSWORD = auto()
@@ -56,8 +60,10 @@ class LoginHandler:
         await self.conn.send("Welcome to Undying Realms.")
 
         while self.state != LoginState.DONE:
+            log.info("LoginHandler state: %s", self.state)
             handler = self._state_handlers[self.state]
             result = await handler()
+            log.info("LoginHandler state %s returned %r", self.state, result)
             if result is None:
                 return None
 

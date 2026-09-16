@@ -248,9 +248,15 @@ def on_player_disconnect(player_id: int) -> None:
 # ---------------------------------------------------------------------------
 
 async def combat_tick_loop() -> None:
+    import logging
+    log = logging.getLogger(__name__)
+
     while True:
         await asyncio.sleep(TICK_SECONDS)
-        await _resolve_tick()
+        try:
+            await _resolve_tick()
+        except Exception:
+            log.exception("combat tick failed")
 
 
 async def _resolve_tick() -> None:

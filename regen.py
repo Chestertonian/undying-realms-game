@@ -10,10 +10,7 @@ persistence reasons silently changes the other's gameplay pacing, or
 vice versa -- two different concerns that happen to both be periodic
 should not share a clock.
 
-Regen amount/interval here are placeholder values, not derived from any
-stat or game-balance model yet -- flat +4 to each resource every 10
-seconds, clamped at max. Revisit when regen mechanics are actually
-designed.
+Regen amount/interval here are placeholder values.
 """
 
 from __future__ import annotations

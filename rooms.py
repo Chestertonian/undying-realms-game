@@ -73,6 +73,7 @@ async def broadcast_to_room(room_id: int, message: str, exclude: list[Connection
         
 async def describe_room_to(connection: Connection, room: Room) -> None:
     await connection.send(room.name)
+    await connection.send('\n')
     await connection.send(room.description)
 
     occupant_lines = []
@@ -96,6 +97,7 @@ async def describe_room_to(connection: Connection, room: Room) -> None:
                 f"{count_word[0].upper()}{count_word[1:]} {template.effective_plural}."
             )
 
+    await connection.send('\n')
     if occupant_lines:
         await connection.send("")
         await connection.send("\n".join(occupant_lines))

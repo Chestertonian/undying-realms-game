@@ -16,6 +16,9 @@ from connection import Connection
 
 from db import get_pool
 
+import npcs
+import targeting
+
 
 @dataclass
 class Room:
@@ -81,7 +84,30 @@ async def describe_room_to(connection: Connection, room: Room) -> None:
     if others:
         await connection.send("\n".join(f"{name}." for name in sorted(others)))
 
+    npcs_here = npcs.npcs_in_room(room.id)
+    if npcs_here:
+        await connection.send(
+            "\n".join(f"{npcs.npc_name(inst)} is here." for inst in npcs_here)
+        )
+
     if room.exits:
         await connection.send("Exits: " + ", ".join(sorted(room.exits)))
     else:
         await connection.send("There are no obvious exits.")
+
+
+async def resolve_look_target(raw: str, room: Room) -> str | None:
+    """
+    Resolve a `look <target>` argument against the NPCs present in a
+    room. Returns the NPC's description, or None if nothing matched.
+
+    Player-name and self-look resolution are handled elsewhere in the
+    look command's dispatch (not here) — this function only covers the
+    NPC case. Ordering relative to player-name resolution doesn't
+    matter: NPC keywords never collide with player names, since player
+    names are excluded from NPC keyword space by construction.
+    """
+    instance = npcs.resolve_npc_target(raw, room.id)
+    if instance is None:
+        return None
+    return npcs.npc_description(instance)

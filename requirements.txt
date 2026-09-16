@@ -1,0 +1,6 @@
+Package       Version
+------------- -------
+asyncpg       0.31.0
+bcrypt        5.0.0
+pip           24.0
+python-dotenv 1.2.3

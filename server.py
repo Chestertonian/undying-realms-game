@@ -16,6 +16,7 @@ from connection import TCPConnection
 from login_handler import LoginHandler
 from registry import registry
 from rooms import load_rooms
+from npcs import load_npcs
 from commands import *
 
 from persistence import flush_loop
@@ -75,6 +76,8 @@ async def main() -> None:
     log.info("Database pool initialized.")
     await load_rooms()
     log.info("Rooms loaded.")
+    await load_npcs()
+    log.info("NPCs loaded.")
     flush_task = asyncio.create_task(flush_loop())
     log.info("Flush loop started.")
 

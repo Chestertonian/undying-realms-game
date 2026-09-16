@@ -24,7 +24,7 @@ RESERVED_NAMES: frozenset[str] = frozenset({
     "self", "me", "here", "all", "it",
 
     # reserved for future admin/system use
-    "admin", "system", "server", "god",
+    "admin", "system", "server", "god", "test"
 })
 
 

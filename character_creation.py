@@ -61,6 +61,12 @@ class CharacterCreationHandler:
             if await name_is_taken(name):
                 await self.conn.send("That name is already taken.")
                 continue
+            
+            from badnames import is_reserved_name
+
+            if is_reserved_name(name):
+                await self.conn.send("That name is reserved. Please choose another.")
+                return True  # reprompt
 
             return name
 

@@ -73,7 +73,6 @@ async def broadcast_to_room(room_id: int, message: str, exclude: list[Connection
         
 async def describe_room_to(connection: Connection, room: Room) -> None:
     await connection.send(room.name)
-    await connection.send('')
     await connection.send(room.description)
 
     occupant_lines = []
@@ -100,8 +99,6 @@ async def describe_room_to(connection: Connection, room: Room) -> None:
     if occupant_lines:
         await connection.send("")
         await connection.send("\n".join(occupant_lines))
-        await connection.send('')
-
 
     if room.exits:
         await connection.send("Exits: " + ", ".join(sorted(room.exits)))
@@ -111,15 +108,28 @@ async def describe_room_to(connection: Connection, room: Room) -> None:
 
 async def resolve_look_target(raw: str, room: Room) -> str | None:
     """
-    Resolve a `look <target>` argument against the NPCs present in a
-    room. Returns the NPC's description, or None if nothing matched.
+    Resolve a `look <target>` argument against players and NPCs present
+    in a room. Players are checked first, then NPCs — matching the
+    display order in describe_room_to(). This includes matching the
+    looker's own name (no separate self-look path); harmless since a
+    player looking at their own name is a reasonable thing to allow.
 
-    Player-name and self-look resolution are handled elsewhere in the
-    look command's dispatch (not here) — this function only covers the
-    NPC case. Ordering relative to player-name resolution doesn't
-    matter: NPC keywords never collide with player names, since player
-    names are excluded from NPC keyword space by construction.
+    Player-name matching is a case-insensitive exact match against the
+    full name (player names are single-word, unlike NPC keywords, so no
+    tokenization is needed here).
     """
+    target = raw.lower()
+
+    from player import player_description  # local import avoids a cycle
+                                              # (player.py imports `rooms`
+                                              # for Player.room)
+
+    for conn in registry.connections():
+        player = conn.player
+        if player is not None and player.current_room_id == room.id:
+            if player.name.lower() == target:
+                return player_description(player)
+
     instance = npcs.resolve_npc_target(raw, room.id)
     if instance is None:
         return None

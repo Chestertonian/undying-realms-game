@@ -125,13 +125,15 @@ async def create_player(
 
     return Player(**dict(row))
 
+
 async def flush_dirty_players() -> None:
     """
-    Write current_room_id for every online player marked dirty, then
-    clear the flag. Scans live connections rather than maintaining a
-    separate "dirty players" set -- consistent with the scan-on-demand
-    pattern used elsewhere (room occupancy), and correct here specifically
-    because only online players can ever be dirty in the first place.
+    Write current_room_id and current HP/SP/EP for every online player
+    marked dirty, then clear the flag. Scans live connections rather
+    than maintaining a separate "dirty players" set -- consistent with
+    the scan-on-demand pattern used elsewhere (room occupancy), and
+    correct here specifically because only online players can ever be
+    dirty in the first place.
     """
     pool = db.get_pool()
     for conn in registry.connections():
@@ -139,8 +141,26 @@ async def flush_dirty_players() -> None:
         if player is None or not player.dirty:
             continue
         await pool.execute(
-            "UPDATE players SET current_room_id = $1 WHERE id = $2",
+            """
+            UPDATE players
+            SET current_room_id = $1,
+                current_hp = $2, max_hp = $3,
+                current_sp = $4, max_sp = $5,
+                current_ep = $6, max_ep = $7
+            WHERE id = $8
+            """,
             player.current_room_id,
+            player.current_hp, player.max_hp,
+            player.current_sp, player.max_sp,
+            player.current_ep, player.max_ep,
             player.id,
         )
-        player.dirty = False
+        player.dirty = False        
+        
+def adjust_current_ep(player: Player, delta: int) -> None:
+    """Adjust current_ep by delta, clamped to [0, max_ep], and mark
+    the player dirty. Movement is the only caller today; combat will
+    likely need the equivalent for HP/SP later, following this same
+    pattern rather than inlining clamp+dirty logic at each call site."""
+    player.current_ep = max(0, min(player.max_ep, player.current_ep + delta))
+    player.dirty = True

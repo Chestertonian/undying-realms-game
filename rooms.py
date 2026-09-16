@@ -97,10 +97,11 @@ async def describe_room_to(connection: Connection, room: Room) -> None:
                 f"{count_word[0].upper()}{count_word[1:]} {template.effective_plural}."
             )
 
-    await connection.send('')
     if occupant_lines:
         await connection.send("")
         await connection.send("\n".join(occupant_lines))
+        await connection.send('')
+
 
     if room.exits:
         await connection.send("Exits: " + ", ".join(sorted(room.exits)))

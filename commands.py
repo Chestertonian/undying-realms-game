@@ -31,7 +31,13 @@ async def cmd_look(connection: Connection, args: str) -> None:
         await describe_room_to(connection, room)
         return
 
-    description = await resolve_look_target(target, room)
+    # Keywords are single-word by design (targeting.parse_target only
+    # ever compares one word). Only the first token is meaningful as a
+    # target — "look orc warrior" resolves the same as "look orc" rather
+    # than failing outright, since trailing words are silently ignored.
+    keyword = target.split(maxsplit=1)[0]
+
+    description = await resolve_look_target(keyword, room)
     if description is None:
         await connection.send("You don't see that here.")
         return

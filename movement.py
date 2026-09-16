@@ -12,6 +12,7 @@ from __future__ import annotations
 from connection import Connection
 from rooms import broadcast_to_room, describe_room_to
 from command_types import CommandHandler
+from player import adjust_current_ep
 
 # alias -> canonical direction name, matching the exit strings used in
 # the exits table / seed data.
@@ -43,6 +44,7 @@ async def do_move(connection: Connection, direction: str) -> None:
 
     player.current_room_id = target_room.id
     player.dirty = True
+    adjust_current_ep(player, -2)
 
     await broadcast_to_room(target_room.id, f"{player.name} arrives.", exclude=[connection])
     await describe_room_to(connection, target_room)

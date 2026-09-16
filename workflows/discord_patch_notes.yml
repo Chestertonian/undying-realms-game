@@ -1,0 +1,18 @@
+name: Patch Notes Discord
+
+on:
+  push:
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send to Discord
+        run: |
+          MESSAGE="Patch update on ${GITHUB_REF_NAME} by ${GITHUB_ACTOR}
+$(git log -1 --pretty=format:'%s%n%h')"
+
+          curl -H "Content-Type: application/json" \
+          -X POST \
+          -d "{\"content\": \"${MESSAGE}\"}" \
+          ${{ secrets.DISCORD_WEBHOOK_URL }}

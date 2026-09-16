@@ -14,14 +14,14 @@ from __future__ import annotations
 
 RESERVED_NAMES: frozenset[str] = frozenset({
     # command verbs currently in the dispatch table
-    "look", "quit", "say", "emote", "chat", "who", "hp", "score",
+    "look", "quit", "say", "emote", "chat", "who", "hp", "score"
 
     # movement directions and common aliases
     "north", "south", "east", "west", "up", "down",
     "n", "s", "e", "w", "u", "d",
 
     # dispatch/targeting-ambiguous words
-    "self", "me", "here", "all", "it",
+    "self", "me", "here", "all", "it", "him"
 
     # reserved for future admin/system use
     "admin", "system", "server", "god", "test"

@@ -20,6 +20,7 @@ from dataclasses import dataclass, field
 
 import targeting
 from db import get_pool
+from text_utils import pluralize
 
 
 @dataclass
@@ -28,7 +29,9 @@ class NpcTemplate:
     name: str
     description: str
     keywords: list[str]  # author-supplied, may be empty
+    plural: str | None  # author-supplied override, may be None
     effective_keywords: list[str] = field(default_factory=list)  # resolved at load
+    effective_plural: str = ""  # resolved at load
 
 
 @dataclass
@@ -62,7 +65,7 @@ async def load_npcs() -> None:
 
     async with pool.acquire() as conn:
         template_rows = await conn.fetch(
-            "SELECT id, name, description, keywords FROM npc_templates"
+            "SELECT id, name, description, keywords, plural FROM npc_templates"
         )
         instance_rows = await conn.fetch(
             "SELECT id, template_id, room_id FROM npc_instances"
@@ -77,8 +80,10 @@ async def load_npcs() -> None:
             name=row["name"],
             description=row["description"],
             keywords=list(row["keywords"]),
+            plural=row["plural"],
         )
         template.effective_keywords = _resolve_effective_keywords(template)
+        template.effective_plural = pluralize(template.name, template.plural)
         templates[template.id] = template
 
     for row in instance_rows:
@@ -106,6 +111,25 @@ def npc_description(instance: NpcInstance) -> str:
 def npcs_in_room(room_id: int) -> list[NpcInstance]:
     """Scan-on-demand over `instances`. No maintained room->NPC index."""
     return [inst for inst in instances.values() if inst.room_id == room_id]
+
+
+def npc_counts_in_room(room_id: int) -> list[tuple[NpcTemplate, int]]:
+    """
+    NPCs present in a room, grouped by template and counted for stacked
+    display (e.g. "Two orc warriors." instead of two separate lines).
+    Order follows first-appearance order in scan order (instance dict
+    iteration, which is insertion/id order) — not sorted by name or count.
+    """
+    counts: dict[int, int] = {}
+    order: list[int] = []
+
+    for inst in npcs_in_room(room_id):
+        if inst.template_id not in counts:
+            counts[inst.template_id] = 0
+            order.append(inst.template_id)
+        counts[inst.template_id] += 1
+
+    return [(templates[template_id], counts[template_id]) for template_id in order]
 
 
 def resolve_npc_target(raw: str, room_id: int) -> NpcInstance | None:

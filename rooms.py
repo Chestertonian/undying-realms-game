@@ -18,6 +18,7 @@ from db import get_pool
 
 import npcs
 import targeting
+from text_utils import number_to_words
 
 
 @dataclass
@@ -74,6 +75,8 @@ async def describe_room_to(connection: Connection, room: Room) -> None:
     await connection.send(room.name)
     await connection.send(room.description)
 
+    occupant_lines = []
+
     others = [
         conn.player.name
         for conn in registry.connections()
@@ -81,14 +84,21 @@ async def describe_room_to(connection: Connection, room: Room) -> None:
         and conn is not connection
         and conn.player.current_room_id == room.id
     ]
-    if others:
-        await connection.send("\n".join(f"{name}." for name in sorted(others)))
+    occupant_lines.extend(f"{name}." for name in sorted(others))
 
-    npcs_here = npcs.npcs_in_room(room.id)
-    if npcs_here:
-        await connection.send(
-            "\n".join(f"{npcs.npc_name(inst)} is here." for inst in npcs_here)
-        )
+    for template, count in npcs.npc_counts_in_room(room.id):
+        if count == 1:
+            name = template.name
+            occupant_lines.append(f"{name[0].upper()}{name[1:]}.")
+        else:
+            count_word = number_to_words(count)
+            occupant_lines.append(
+                f"{count_word[0].upper()}{count_word[1:]} {template.effective_plural}."
+            )
+
+    if occupant_lines:
+        await connection.send("")
+        await connection.send("\n".join(occupant_lines))
 
     if room.exits:
         await connection.send("Exits: " + ", ".join(sorted(room.exits)))

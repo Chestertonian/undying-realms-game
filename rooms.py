@@ -20,8 +20,10 @@ import npcs
 import targeting
 from text_utils import number_to_words
 
-from player import Player
+from typing import TYPE_CHECKING
 
+if TYPE_CHECKING:
+    from player import Player
 
 @dataclass
 class Room:

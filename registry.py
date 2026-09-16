@@ -28,6 +28,9 @@ class ConnectionRegistry:
 
     def unregister(self, player_id: int) -> None:
         self._connections.pop(player_id, None)
+        from combat import on_player_disconnect
+        on_player_disconnect(player_id)
+
 
     def get_connection(self, player_id: int) -> Connection | None:
         return self._connections.get(player_id)

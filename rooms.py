@@ -20,6 +20,8 @@ import npcs
 import targeting
 from text_utils import number_to_words
 
+from player import Player
+
 
 @dataclass
 class Room:
@@ -134,3 +136,15 @@ async def resolve_look_target(raw: str, room: Room) -> str | None:
     if instance is None:
         return None
     return npcs.npc_description(instance)
+
+
+def players_in_room(room_id: int, exclude: Connection | None = None) -> list[Player]:
+    """Scan-on-demand over live connections, consistent with how
+    describe_room_to() finds occupants. No maintained room->player index."""
+    return [
+        conn.player
+        for conn in registry.connections()
+        if conn.player is not None
+        and conn is not exclude
+        and conn.player.current_room_id == room_id
+    ]

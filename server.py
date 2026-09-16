@@ -22,6 +22,7 @@ from commands import *
 
 from persistence import flush_loop
 from regen import regen_loop
+from combat import combat_tick_loop
 
 HOST = "0.0.0.0"
 PORT = 4000
@@ -86,6 +87,8 @@ async def main() -> None:
     log.info("Flush loop started.")
     regen_task = asyncio.create_task(regen_loop())
     log.info("Regen loop started.")
+    combat_loop = asyncio.create_task(combat_tick_loop())
+    log.info("Combat tick loop started.")
 
     server = await asyncio.start_server(handle_client, HOST, PORT)
     addrs = ", ".join(str(sock.getsockname()) for sock in server.sockets)
@@ -97,6 +100,7 @@ async def main() -> None:
     finally:
         flush_task.cancel()
         regen_task.cancel()
+        combat_loop.cancel()
         await db.close_pool()
 
 

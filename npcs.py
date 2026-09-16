@@ -1,13 +1,12 @@
 """
 NPC templates and instances.
 
-Existence-only milestone: NPCs are static, read-only from the server's
-perspective once loaded. No dirty-flag persistence, no combat, no dialogue.
+Templates carry static data plus flat max_hp. Instances carry per-NPC
+current_hp, dirty-flagged for the same flush-loop persistence pattern
+used for players.
 
 Mirrors the eager-loading approach used for rooms: load everything into
-module-level dicts at startup. Unlike rooms, this is a single pass —
-instances only reference templates and rooms, no forward/circular
-references among NPCs themselves.
+module-level dicts at startup.
 
 Room occupancy is scan-on-demand over `instances`, consistent with how
 player room occupancy is handled in rooms.describe_room_to() — no
@@ -28,10 +27,11 @@ class NpcTemplate:
     id: int
     name: str
     description: str
-    keywords: list[str]  # author-supplied, may be empty
-    plural: str | None  # author-supplied override, may be None
-    effective_keywords: list[str] = field(default_factory=list)  # resolved at load
-    effective_plural: str = ""  # resolved at load
+    keywords: list[str]
+    plural: str | None
+    max_hp: int
+    effective_keywords: list[str] = field(default_factory=list)
+    effective_plural: str = ""
 
 
 @dataclass
@@ -39,9 +39,12 @@ class NpcInstance:
     id: int
     template_id: int
     room_id: int
+    current_hp: int
+    dirty: bool = False
 
 
-# Populated once by load_npcs() at startup; treated as read-only afterward.
+# Populated once by load_npcs() at startup; treated as read-only afterward
+# except for current_hp/dirty, which combat.py mutates in place.
 templates: dict[int, NpcTemplate] = {}
 instances: dict[int, NpcInstance] = {}
 
@@ -60,15 +63,20 @@ def _resolve_effective_keywords(template: NpcTemplate) -> list[str]:
 async def load_npcs() -> None:
     """Load all NPC templates and instances from the database into the
     module-level `templates`/`instances` dicts. Call once at server
-    startup, after load_rooms() (instances reference rooms by id)."""
+    startup, after load_rooms() (instances reference rooms by id).
+
+    Requires npc_templates.max_hp and npc_instances.current_hp columns —
+    see migration note below if these don't exist yet.
+    """
     pool = get_pool()
 
     async with pool.acquire() as conn:
         template_rows = await conn.fetch(
-            "SELECT id, name, description, keywords, plural FROM npc_templates"
+            "SELECT id, name, description, keywords, plural, max_hp "
+            "FROM npc_templates"
         )
         instance_rows = await conn.fetch(
-            "SELECT id, template_id, room_id FROM npc_instances"
+            "SELECT id, template_id, room_id, current_hp FROM npc_instances"
         )
 
     templates.clear()
@@ -81,6 +89,7 @@ async def load_npcs() -> None:
             description=row["description"],
             keywords=list(row["keywords"]),
             plural=row["plural"],
+            max_hp=row["max_hp"],
         )
         template.effective_keywords = _resolve_effective_keywords(template)
         template.effective_plural = pluralize(template.name, template.plural)
@@ -97,6 +106,7 @@ async def load_npcs() -> None:
             id=row["id"],
             template_id=template_id,
             room_id=row["room_id"],
+            current_hp=row["current_hp"],
         )
 
 
@@ -111,6 +121,36 @@ def npc_description(instance: NpcInstance) -> str:
 def npcs_in_room(room_id: int) -> list[NpcInstance]:
     """Scan-on-demand over `instances`. No maintained room->NPC index."""
     return [inst for inst in instances.values() if inst.room_id == room_id]
+
+
+def adjust_current_hp(instance: NpcInstance, delta: int) -> None:
+    template = templates[instance.template_id]
+    instance.current_hp = max(0, min(template.max_hp, instance.current_hp + delta))
+    instance.dirty = True
+
+
+async def flush_dirty_npcs() -> None:
+    """
+    Write current_hp for every NPC instance marked dirty, then clear the
+    flag. Scans the module-level `instances` dict directly rather than
+    going through connections/registry -- unlike players, NPCs aren't
+    tied to a live connection, so `instances` itself is the full set of
+    "things that could be dirty," not a subset requiring a liveness
+    check first.
+
+    Only current_hp is written; max_hp lives on the template and is
+    static, never dirty-flagged.
+    """
+    pool = get_pool()
+    for instance in instances.values():
+        if not instance.dirty:
+            continue
+        await pool.execute(
+            "UPDATE npc_instances SET current_hp = $1 WHERE id = $2",
+            instance.current_hp,
+            instance.id,
+        )
+        instance.dirty = False
 
 
 def npc_counts_in_room(room_id: int) -> list[tuple[NpcTemplate, int]]:

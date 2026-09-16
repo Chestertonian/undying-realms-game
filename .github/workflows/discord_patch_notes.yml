@@ -7,12 +7,18 @@ jobs:
   notify:
     runs-on: ubuntu-latest
     steps:
-      - name: Send to Discord
-        run: |
-          MESSAGE="Patch update on ${GITHUB_REF_NAME} by ${GITHUB_ACTOR}
-$(git log -1 --pretty=format:'%s%n%h')"
+      - uses: actions/checkout@v4
 
+      - name: Send to Discord
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: |
+          SUBJECT=$(git log -1 --pretty=format:'%s')
+          SHA=$(git log -1 --pretty=format:'%h')
+          MESSAGE="Patch update on ${GITHUB_REF_NAME} by ${GITHUB_ACTOR}: ${SUBJECT} (${SHA})"
+
+          jq -n --arg msg "$MESSAGE" '{content: $msg}' | \
           curl -H "Content-Type: application/json" \
           -X POST \
-          -d "{\"content\": \"${MESSAGE}\"}" \
-          ${{ secrets.DISCORD_WEBHOOK_URL }}
+          -d @- \
+          "$DISCORD_WEBHOOK_URL"

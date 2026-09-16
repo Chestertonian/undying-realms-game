@@ -156,6 +156,17 @@ async def flush_dirty_players() -> None:
             player.id,
         )
         player.dirty = False        
+
+
+def adjust_current_hp(player: Player, delta: int) -> None:
+    player.current_hp = max(0, min(player.max_hp, player.current_hp + delta))
+    player.dirty = True
+
+
+def adjust_current_sp(player: Player, delta: int) -> None:
+    player.current_sp = max(0, min(player.max_sp, player.current_sp + delta))
+    player.dirty = True
+
         
 def adjust_current_ep(player: Player, delta: int) -> None:
     """Adjust current_ep by delta, clamped to [0, max_ep], and mark

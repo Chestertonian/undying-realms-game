@@ -20,6 +20,7 @@ from npcs import load_npcs
 from commands import *
 
 from persistence import flush_loop
+from regen import regen_loop
 
 HOST = "0.0.0.0"
 PORT = 4000
@@ -80,6 +81,8 @@ async def main() -> None:
     log.info("NPCs loaded.")
     flush_task = asyncio.create_task(flush_loop())
     log.info("Flush loop started.")
+    regen_task = asyncio.create_task(regen_loop())
+    log.info("Regen loop started.")
 
     server = await asyncio.start_server(handle_client, HOST, PORT)
     addrs = ", ".join(str(sock.getsockname()) for sock in server.sockets)
@@ -90,6 +93,7 @@ async def main() -> None:
             await server.serve_forever()
     finally:
         flush_task.cancel()
+        regen_task.cancel()
         await db.close_pool()
 
 

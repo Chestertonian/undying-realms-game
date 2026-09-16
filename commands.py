@@ -19,7 +19,7 @@ from channels import cmd_chat
 from movement import MOVEMENT_COMMANDS
 from info import cmd_who, cmd_hp, cmd_score
 from dialogue import cmd_ask
-from combat import cmd_kill, cmd_flee, cmd_target
+import combat
 
 from rooms import describe_room_to, resolve_look_target
 
@@ -49,6 +49,26 @@ async def cmd_look(connection: Connection, args: str) -> None:
 async def cmd_quit(connection: Connection, args: str) -> None:
     await connection.send("Goodbye.")
     connection.player = None  # sentinel: signals the caller's loop to stop
+    
+async def cmd_kill(connection: Connection, args: str) -> None:
+    actor = ("player", connection.player.id)
+    room_id = connection.player.current_room_id
+    message = combat.cmd_kill(actor, args, room_id)
+    await connection.send(message)
+
+
+async def cmd_target(connection: Connection, args: str) -> None:
+    actor = ("player", connection.player.id)
+    room_id = connection.player.current_room_id
+    message = combat.cmd_target(actor, args, room_id)
+    await connection.send(message)
+
+
+async def cmd_flee(connection: Connection, args: str) -> None:
+    actor = ("player", connection.player.id)
+    room_id = connection.player.current_room_id
+    message = combat.cmd_flee(actor, room_id)
+    await connection.send(message)
 
 
 COMMAND_TABLE: dict[str, CommandHandler] = {

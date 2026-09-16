@@ -54,9 +54,9 @@ def _resolve_player(player_id: int) -> "Player | None":
     the player has no live connection (disconnected) — this is also the
     mechanism by which the tick loop treats a disconnected player as
     absent, with no separate disconnect hook required in this module."""
-    from registry import connections
+    from registry import registry
 
-    for conn in connections():
+    for conn in registry.connections():
         if conn.player is not None and conn.player.id == player_id:
             return conn.player
     return None

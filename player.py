@@ -175,3 +175,13 @@ def adjust_current_ep(player: Player, delta: int) -> None:
     pattern rather than inlining clamp+dirty logic at each call site."""
     player.current_ep = max(0, min(player.max_ep, player.current_ep + delta))
     player.dirty = True
+    
+def player_description(player: Player) -> str:
+    """
+    Placeholder auto-generated description from existing character-creation
+    fields, since Player has no freeform description field yet. Wording
+    is a rough guess at what race/gender/background actually contain --
+    adjust the template once real content conventions for `background`
+    are settled. Not persisted; recomputed on every look.
+    """
+    return f"You see {player.name}, a {player.gender} {player.race} ({player.background})."

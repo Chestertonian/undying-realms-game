@@ -13,6 +13,8 @@ from backgrounds import BACKGROUNDS
 from races import RACES
 from player import Player, apply_race_modifiers, create_player, name_is_taken
 from stats import ATTRIBUTES, StatRoller, assign_stats
+from badnames import is_reserved_name
+
 
 NAME_MIN_LENGTH = 3
 NAME_MAX_LENGTH = 16
@@ -61,12 +63,10 @@ class CharacterCreationHandler:
             if await name_is_taken(name):
                 await self.conn.send("That name is already taken.")
                 continue
-            
-            from badnames import is_reserved_name
-
+        
             if is_reserved_name(name):
                 await self.conn.send("That name is reserved. Please choose another.")
-                return True  # reprompt
+                continue  # reprompt
 
             return name
 

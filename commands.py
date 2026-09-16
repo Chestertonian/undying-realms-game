@@ -18,6 +18,7 @@ from social import cmd_say, cmd_emote
 from channels import cmd_chat 
 from movement import MOVEMENT_COMMANDS
 from info import cmd_who, cmd_hp, cmd_score
+from dialogue import cmd_ask
 
 from rooms import describe_room_to, resolve_look_target
 
@@ -60,6 +61,7 @@ COMMAND_TABLE: dict[str, CommandHandler] = {
     "who": cmd_who,
     "hp": cmd_hp,
     "score": cmd_score,
+    "ask":  cmd_ask,
     **MOVEMENT_COMMANDS,
 }
 

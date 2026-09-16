@@ -18,13 +18,13 @@ RESERVED_NAMES: frozenset[str] = frozenset({
 
     # movement directions and common aliases
     "north", "south", "east", "west", "up", "down",
-    "n", "s", "e", "w", "u", "d",
+    "n", "s", "e", "w", "u", "d", "l"
 
     # dispatch/targeting-ambiguous words
     "self", "me", "here", "all", "it", "him"
 
     # reserved for future admin/system use
-    "admin", "system", "server", "god", "test"
+    "admin", "system", "server", "god", "test", "tester"
 })
 
 

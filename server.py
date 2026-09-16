@@ -17,6 +17,7 @@ from login_handler import LoginHandler
 from registry import registry
 from rooms import load_rooms
 from npcs import load_npcs
+from dialogue import load_dialogue
 from commands import *
 
 from persistence import flush_loop
@@ -79,6 +80,8 @@ async def main() -> None:
     log.info("Rooms loaded.")
     await load_npcs()
     log.info("NPCs loaded.")
+    await load_dialogue()
+    log.info("Dialogue loaded.")
     flush_task = asyncio.create_task(flush_loop())
     log.info("Flush loop started.")
     regen_task = asyncio.create_task(regen_loop())

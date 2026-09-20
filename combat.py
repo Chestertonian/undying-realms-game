@@ -268,6 +268,8 @@ async def _resolve_tick() -> None:
     happening every tick, and a local Postgres write is fast."""
     # 1. Snapshot current_target at tick start — one pass, no mid-tick mutation.
     snapshot = list(current_target.items())
+    import logging
+    logging.getLogger(__name__).info("combat tick snapshot: %r", snapshot)
     dead: set[EntityRef] = set()
 
     # 2. Damage pass, with auto-aggro on first hit.

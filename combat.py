@@ -268,8 +268,6 @@ async def _resolve_tick() -> None:
     happening every tick, and a local Postgres write is fast."""
     # 1. Snapshot current_target at tick start — one pass, no mid-tick mutation.
     snapshot = list(current_target.items())
-    import logging
-    logging.getLogger(__name__).info("combat tick snapshot: %r", snapshot)
     dead: set[EntityRef] = set()
 
     # 2. Damage pass, with auto-aggro on first hit.
@@ -285,18 +283,37 @@ async def _resolve_tick() -> None:
         roll = random.randint(1, UNARMED_DIE)
         _adjust_hp(target, -roll)
 
+        room_id = _room_id(attacker)
+        if room_id is not None:
+            from rooms import broadcast_to_room
+            await broadcast_to_room(
+                room_id,
+                f"{_display_name(attacker)} hits {_display_name(target)} for {roll} damage!",
+            )
+
         hp = _current_hp(target)
         if hp is not None and hp <= 0:
             dead.add(target)
 
     # 3. Death pass — after full damage pass, using post-damage HP.
     for entity in dead:
+        # Capture room/name before disengage_self/deletion — NPC deletion
+        # removes it from `instances`, so _resolve()/_display_name() would
+        # return nothing if called after.
+        death_room_id = _room_id(entity)
+        death_name = _display_name(entity)
+
         _clear_as_target(entity)
         disengage_self(entity)
         if entity[0] == "npc":
             await _delete_npc_instance(entity)
         else:
             await _respawn_player(entity)
+
+        if death_room_id is not None:
+            from rooms import broadcast_to_room
+            capitalized = f"{death_name[0].upper()}{death_name[1:]}"
+            await broadcast_to_room(death_room_id, f"{capitalized} dies!")
 
     # 4. Reassignment pass — absent current_target with a present alternative.
     for attacker, target in list(current_target.items()):

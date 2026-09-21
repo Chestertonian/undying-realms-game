@@ -29,12 +29,15 @@ separate disconnect hook.
 from __future__ import annotations
 
 import asyncio
+import logging
 import random
 from typing import Literal, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from player import Player
     from npcs import NpcInstance
+
+log = logging.getLogger(__name__)
 
 EntityRef = tuple[Literal["player", "npc"], int]
 
@@ -59,6 +62,7 @@ def _resolve_player(player_id: int) -> "Player | None":
     for conn in registry.connections():
         if conn.player is not None and conn.player.id == player_id:
             return conn.player
+    log.debug("combat: player id=%s has no live connection", player_id)
     return None
 
 
@@ -103,6 +107,7 @@ def _adjust_hp(ref: EntityRef, delta: int) -> None:
     clamp-and-dirty-flag internally."""
     entity = _resolve(ref)
     if entity is None:
+        log.debug("combat: _adjust_hp target %s vanished before resolution", ref)
         return  # target vanished (e.g. disconnected) between snapshot and resolution
     if ref[0] == "player":
         from player import adjust_current_hp as adjust_player_hp
@@ -143,6 +148,7 @@ def resolve_combat_target(raw: str, room_id: int) -> EntityRef | None:
 
     result = resolve_target(raw, npc_candidates + player_candidates)
     if not result.found:
+        log.debug("combat: target resolution failed for %r in room %s", raw, room_id)
         return None
 
     npc_ids = {cand_id for cand_id, _ in npc_candidates}
@@ -163,6 +169,7 @@ def engage(attacker: EntityRef, target: EntityRef) -> None:
     """Used by kill/target commands, and by auto-aggro on taking damage.
     Adds target to engaged_with if absent, and always sets current_target
     to it — 'pick within / append to the set' semantics."""
+    log.debug("combat: %s engages %s", attacker, target)
     _ensure_engaged(attacker, target)
     current_target[attacker] = target
 
@@ -171,6 +178,7 @@ def disengage_self(entity: EntityRef) -> None:
     """Used by flee, death, respawn, and disconnect cleanup. Clears the
     entity's own outgoing state only — does NOT remove entity from
     others' engaged_with sets (NPCs 'remember')."""
+    log.debug("combat: %s disengages", entity)
     engaged_with.pop(entity, None)
     current_target.pop(entity, None)
 
@@ -182,6 +190,7 @@ def is_in_combat(entity: EntityRef) -> bool:
 def _clear_as_target(dead: EntityRef) -> None:
     """On death: remove `dead` from every attacker's engaged_with set,
     and unset current_target wherever it pointed at `dead`."""
+    log.debug("combat: clearing %s as a target everywhere", dead)
     for targets in engaged_with.values():
         targets.discard(dead)
     for attacker, tgt in list(current_target.items()):
@@ -198,9 +207,11 @@ def cmd_kill(actor: EntityRef, keyword: str, room_id: int) -> str:
     if target is None:
         return "You don't see that here."
     if target == actor:
+        log.debug("combat: %s attempted to attack self", actor)
         return "You can't attack yourself."
 
     engage(actor, target)
+    log.info("combat: %s attacks %s in room %s", actor, target, room_id)
     return f"You attack {_display_name(target)}!"
 
 
@@ -208,7 +219,7 @@ def cmd_target(actor: EntityRef, keyword: str, room_id: int) -> str:
     return cmd_kill(actor, keyword, room_id)
 
 
-def cmd_flee(actor: EntityRef, room_id: int) -> str:
+async def cmd_flee(actor: EntityRef, room_id: int) -> str:
     """Takes room_id, not a Room object, for consistency with
     cmd_kill/cmd_target — combat.py's command entry points all take bare
     ids, and look up whatever richer object they need internally."""
@@ -221,11 +232,13 @@ def cmd_flee(actor: EntityRef, room_id: int) -> str:
     room = rooms[room_id]
     exits = get_exits(room)
     if not exits:
+        log.debug("combat: %s tried to flee room %s with no exits", actor, room_id)
         return "There's nowhere to flee to!"
 
     direction, destination = random.choice(list(exits.items()))
     disengage_self(actor)
-    move_entity(actor, destination)
+    await move_entity(actor, destination)
+    log.info("combat: %s flees %s from room %s to %s", actor, direction, room_id, destination.id)
     return f"You flee {direction}!"
 
 
@@ -240,6 +253,7 @@ def on_player_disconnect(player_id: int) -> None:
     resolves. Clears the player's own outgoing state only — matches
     flee/death semantics: others' engaged_with sets still 'remember'
     them, same as a fled target does."""
+    log.info("combat: player id=%s disconnected, disengaging", player_id)
     disengage_self(("player", player_id))
 
 
@@ -266,22 +280,32 @@ async def _resolve_tick() -> None:
     done, closing the crash window where in-memory state and the DB could
     disagree. Costs a brief pause on death events only; deaths aren't
     happening every tick, and a local Postgres write is fast."""
+    
+    import logging
+    log = logging.getLogger(__name__)
+
+    
     # 1. Snapshot current_target at tick start — one pass, no mid-tick mutation.
     snapshot = list(current_target.items())
     dead: set[EntityRef] = set()
+
+    log.debug("combat tick: resolving %d active target(s)", len(snapshot))
 
     # 2. Damage pass, with auto-aggro on first hit.
     for attacker, target in snapshot:
         if attacker in dead or target in dead:
             continue
         if not _same_room(attacker, target):
+            log.debug("combat tick: %s and %s no longer share a room, whiffing", attacker, target)
             continue  # silent whiff; reassignment pass handles retargeting
 
         if attacker not in engaged_with.get(target, ()):
+            log.debug("combat tick: auto-aggro, %s engages %s back", target, attacker)
             engage(target, attacker)
 
         roll = random.randint(1, UNARMED_DIE)
         _adjust_hp(target, -roll)
+        log.debug("combat tick: %s hits %s for %d", attacker, target, roll)
 
         room_id = _room_id(attacker)
         if room_id is not None:
@@ -293,6 +317,7 @@ async def _resolve_tick() -> None:
 
         hp = _current_hp(target)
         if hp is not None and hp <= 0:
+            log.info("combat tick: %s has been reduced to %d hp and will die", target, hp)
             dead.add(target)
 
     # 3. Death pass — after full damage pass, using post-damage HP.
@@ -302,6 +327,8 @@ async def _resolve_tick() -> None:
         # return nothing if called after.
         death_room_id = _room_id(entity)
         death_name = _display_name(entity)
+
+        log.info("combat tick: %s (%s) dies in room %s", entity, death_name, death_room_id)
 
         _clear_as_target(entity)
         disengage_self(entity)
@@ -324,7 +351,10 @@ async def _resolve_tick() -> None:
 
         alt = _find_present_alternative(attacker, exclude=target)
         if alt is not None:
+            log.debug("combat tick: reassigning %s from absent %s to %s", attacker, target, alt)
             current_target[attacker] = alt
+        else:
+            log.debug("combat tick: %s has no present alternative to absent %s", attacker, target)
         # else: leave current_target pointed at the absent target — resumes
         # automatically once attacker/target share a room again.
 
@@ -348,6 +378,7 @@ async def _delete_npc_instance(ref: EntityRef) -> None:
     pool = get_pool()
     async with pool.acquire() as conn:
         await conn.execute("DELETE FROM npc_instances WHERE id = $1", ref[1])
+    log.info("combat: deleted npc instance id=%s", ref[1])
 
 
 async def _respawn_player(ref: EntityRef) -> None:
@@ -379,3 +410,8 @@ async def _respawn_player(ref: EntityRef) -> None:
             """,
             player_id,
         )
+    log.info(
+        "combat: respawned player id=%s (live connection: %s)",
+        player_id,
+        player is not None,
+    )

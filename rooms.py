@@ -17,6 +17,7 @@ from connection import Connection
 from db import get_pool
 
 import npcs
+import items
 import targeting
 from text_utils import number_to_words
 
@@ -100,9 +101,20 @@ async def describe_room_to(connection: Connection, room: Room) -> None:
                 f"{count_word[0].upper()}{count_word[1:]} {template.effective_plural}."
             )
 
+    for template, count in items.item_counts_in_room(room.id):
+        if count == 1:
+            name = template.name
+            occupant_lines.append(f"{name[0].upper()}{name[1:]}.")
+        else:
+            count_word = number_to_words(count)
+            occupant_lines.append(
+                f"{count_word[0].upper()}{count_word[1:]} {template.effective_plural}."
+            )
+
     if occupant_lines:
         await connection.send("")
         await connection.send("\n".join(occupant_lines))
+    
 
     if room.exits:
         await connection.send("Exits: " + ", ".join(sorted(room.exits)))
@@ -134,10 +146,16 @@ async def resolve_look_target(raw: str, room: Room) -> str | None:
             if player.name.lower() == target:
                 return player_description(player)
 
+    
     instance = npcs.resolve_npc_target(raw, room.id)
-    if instance is None:
-        return None
-    return npcs.npc_description(instance)
+    if instance is not None:
+        return npcs.npc_description(instance)
+
+    item_instance = items.resolve_item_in_room(raw, room.id)
+    if item_instance is not None:
+        return items.item_description(item_instance)
+
+    return None
 
 
 def players_in_room(room_id: int, exclude: Connection | None = None) -> list[Player]:

@@ -18,6 +18,7 @@ from social import cmd_say, cmd_emote
 from channels import cmd_chat 
 from movement import MOVEMENT_COMMANDS
 from info import cmd_who, cmd_hp, cmd_score
+from items import cmd_get, cmd_drop, cmd_give, cmd_inventory
 from dialogue import cmd_ask
 import combat
 
@@ -87,6 +88,12 @@ COMMAND_TABLE: dict[str, CommandHandler] = {
     "kill":     cmd_kill,
     "attack":   cmd_kill,
     "flee":     cmd_flee,
+    "get":       cmd_get,
+    "drop":      cmd_drop,
+    "give":      cmd_give,
+    "inventory": cmd_inventory,
+    "inv":       cmd_inventory,
+    "i":         cmd_inventory,
     **MOVEMENT_COMMANDS,
 }
 

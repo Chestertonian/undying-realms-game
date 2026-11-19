@@ -216,8 +216,6 @@ async def cmd_kill(actor: EntityRef, keyword: str, room_id: int) -> str:
     log.info("combat: %s attacks %s in room %s", actor, target, room_id)
     constructed_string = f"{_display_name(actor)} attacks {_display_name(target)}!"
     await broadcast_to_room(room_id, constructed_string)
-    return f"You attack {_display_name(target)}!"
-
 
 def cmd_target(actor: EntityRef, keyword: str, room_id: int) -> str:
     return cmd_kill(actor, keyword, room_id)

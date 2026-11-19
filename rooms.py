@@ -77,7 +77,7 @@ async def broadcast_to_room(room_id: int, message: str, exclude: list[Connection
         await conn.send(message)
         
 async def describe_room_to(connection: Connection, room: Room) -> None:
-    await connection.send(room.name)
+    await connection.send("   " + room.name)
     await connection.send(room.description)
 
     occupant_lines = []
@@ -117,7 +117,7 @@ async def describe_room_to(connection: Connection, room: Room) -> None:
     
 
     if room.exits:
-        await connection.send("Exits: " + ", ".join(sorted(room.exits)))
+        await connection.send("   Exits: " + ", ".join(sorted(room.exits)))
     else:
         await connection.send("There are no obvious exits.")
 

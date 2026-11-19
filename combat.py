@@ -204,7 +204,7 @@ def _clear_as_target(dead: EntityRef) -> None:
 # Command-facing entry points
 # ---------------------------------------------------------------------------
 
-def cmd_kill(actor: EntityRef, keyword: str, room_id: int) -> str:
+async def cmd_kill(actor: EntityRef, keyword: str, room_id: int) -> str:
     target = resolve_combat_target(keyword, room_id)
     if target is None:
         return "You don't see that here."
@@ -215,7 +215,7 @@ def cmd_kill(actor: EntityRef, keyword: str, room_id: int) -> str:
     engage(actor, target)
     log.info("combat: %s attacks %s in room %s", actor, target, room_id)
     constructed_string=str(f"{actor} attacks f{target}!")
-    broadcast_to_room(room_id, constructed_string)
+    await broadcast_to_room(room_id, constructed_string)
     return f"You attack {_display_name(target)}!"
 
 
@@ -402,8 +402,7 @@ async def _respawn_player(ref: EntityRef) -> None:
         player.current_ep = player.max_ep
         player.current_room_id = 1
                 
-    # TODO: Why isn't this line working?
-    # broadcast_to_room(1, "A soul is returned to life by the grace of the gods.")
+    await broadcast_to_room(1, "A soul is returned to life by the grace of the gods.")
 
     pool = get_pool()
     async with pool.acquire() as conn:

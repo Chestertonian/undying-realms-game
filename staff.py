@@ -21,6 +21,11 @@ def staff_only(handler: CommandHandler) -> CommandHandler:
     @wraps(handler)
     async def wrapper(connection: Connection, args: str) -> None:
         if connection.player is None or not connection.player.is_staff:
+            log.warning(
+                "staff_only: player=%r is_staff=%r",
+                connection.player.name if connection.player else None,
+                connection.player.is_staff if connection.player else None,
+            )
             await connection.send("Unknown command.")
             return
         await handler(connection, args)
@@ -86,7 +91,11 @@ async def cmd_grant(connection: Connection, args: str) -> None:
     target.roles.add(role.key)
     log.info(
         "staff %s (id %d) granted role %s to %s (id %d)",
-        connection.player.name, connection.player.id, role.key, target.name, target.id,
+        connection.player.name,
+        connection.player.id,
+        role.key,
+        target.name,
+        target.id,
     )
     await connection.send(f"You grant the {role.name} role to {target.name}.")
     await registry.broadcast_to_all(f"   << {target.name} is now the {role.name}. >>")
@@ -124,7 +133,11 @@ async def cmd_revoke(connection: Connection, args: str) -> None:
     target.roles.discard(role.key)
     log.info(
         "staff %s (id %d) revoked role %s from %s (id %d)",
-        connection.player.name, connection.player.id, role.key, target.name, target.id,
+        connection.player.name,
+        connection.player.id,
+        role.key,
+        target.name,
+        target.id,
     )
     await connection.send(f"You revoke the {role.name} role from {target.name}.")
     await target_conn.send(f"Your {role.name} role has been revoked.")

@@ -214,6 +214,8 @@ def cmd_kill(actor: EntityRef, keyword: str, room_id: int) -> str:
 
     engage(actor, target)
     log.info("combat: %s attacks %s in room %s", actor, target, room_id)
+    constructed_string=str(f"{actor} attacks f{target}!")
+    broadcast_to_room(room_id, constructed_string)
     return f"You attack {_display_name(target)}!"
 
 
@@ -343,7 +345,7 @@ async def _resolve_tick() -> None:
             from rooms import broadcast_to_room
             capitalized = f"{death_name[0].upper()}{death_name[1:]}"
             await broadcast_to_room(death_room_id, f"{capitalized} dies!")
-            await registry.broadcast_to_all(f"   \033[0;31m<< The blood of {capitalized} has been spilled. >>\033[0m   ")
+            await registry.broadcast_to_all(f"\n   \033[0;31m<< The blood of {capitalized} has been spilled. >>\033[0m   \n")
 
     # 4. Reassignment pass — absent current_target with a present alternative.
     for attacker, target in list(current_target.items()):
@@ -400,7 +402,8 @@ async def _respawn_player(ref: EntityRef) -> None:
         player.current_ep = player.max_ep
         player.current_room_id = 1
                 
-    broadcast_to_room(1, "A soul is returned to life by the grace of the gods.")
+    # TODO: Why isn't this line working?
+    # broadcast_to_room(1, "A soul is returned to life by the grace of the gods.")
 
     pool = get_pool()
     async with pool.acquire() as conn:

@@ -54,6 +54,7 @@ UNARMED_DIE = 8
 # Entity resolution — bridges EntityRef back to the real Player/NpcInstance
 # ---------------------------------------------------------------------------
 
+
 def _resolve_player(player_id: int) -> "Player | None":
     """Scans live connections for a matching player id. Returns None if
     the player has no live connection (disconnected) — this is also the
@@ -74,6 +75,7 @@ def _resolve(ref: EntityRef) -> "Player | NpcInstance | None":
         return _resolve_player(id_)
     else:
         from npcs import instances
+
         return instances.get(id_)
 
 
@@ -101,6 +103,7 @@ def _display_name(ref: EntityRef) -> str:
     if ref[0] == "player":
         return entity.name
     from npcs import templates
+
     return templates[entity.template_id].name
 
 
@@ -113,15 +116,18 @@ def _adjust_hp(ref: EntityRef, delta: int) -> None:
         return  # target vanished (e.g. disconnected) between snapshot and resolution
     if ref[0] == "player":
         from player import adjust_current_hp as adjust_player_hp
+
         adjust_player_hp(entity, delta)
     else:
         from npcs import adjust_current_hp as adjust_npc_hp
+
         adjust_npc_hp(entity, delta)
 
 
 # ---------------------------------------------------------------------------
 # Combined target resolution (NPCs + players in a room)
 # ---------------------------------------------------------------------------
+
 
 def resolve_combat_target(raw: str, room_id: int) -> EntityRef | None:
     """
@@ -144,8 +150,7 @@ def resolve_combat_target(raw: str, room_id: int) -> EntityRef | None:
         for inst in npcs_in_room(room_id)
     ]
     player_candidates = [
-        (player.id, [player.name.lower()])
-        for player in players_in_room(room_id)
+        (player.id, [player.name.lower()]) for player in players_in_room(room_id)
     ]
 
     result = resolve_target(raw, npc_candidates + player_candidates)
@@ -162,6 +167,7 @@ def resolve_combat_target(raw: str, room_id: int) -> EntityRef | None:
 # ---------------------------------------------------------------------------
 # Engagement mutators
 # ---------------------------------------------------------------------------
+
 
 def _ensure_engaged(attacker: EntityRef, target: EntityRef) -> None:
     engaged_with.setdefault(attacker, set()).add(target)
@@ -204,6 +210,7 @@ def _clear_as_target(dead: EntityRef) -> None:
 # Command-facing entry points
 # ---------------------------------------------------------------------------
 
+
 async def cmd_kill(actor: EntityRef, keyword: str, room_id: int) -> str:
     target = resolve_combat_target(keyword, room_id)
     if target is None:
@@ -216,6 +223,7 @@ async def cmd_kill(actor: EntityRef, keyword: str, room_id: int) -> str:
     log.info("combat: %s attacks %s in room %s", actor, target, room_id)
     constructed_string = f"{_display_name(actor)} attacks {_display_name(target)}!"
     await broadcast_to_room(room_id, constructed_string)
+
 
 def cmd_target(actor: EntityRef, keyword: str, room_id: int) -> str:
     return cmd_kill(actor, keyword, room_id)
@@ -240,7 +248,13 @@ async def cmd_flee(actor: EntityRef, room_id: int) -> str:
     direction, destination = random.choice(list(exits.items()))
     disengage_self(actor)
     await move_entity(actor, destination)
-    log.info("combat: %s flees %s from room %s to %s", actor, direction, room_id, destination.id)
+    log.info(
+        "combat: %s flees %s from room %s to %s",
+        actor,
+        direction,
+        room_id,
+        destination.id,
+    )
     return f"You flee {direction}!"
 
 
@@ -263,8 +277,10 @@ def on_player_disconnect(player_id: int) -> None:
 # Tick resolution
 # ---------------------------------------------------------------------------
 
+
 async def combat_tick_loop() -> None:
     import logging
+
     log = logging.getLogger(__name__)
 
     while True:
@@ -282,11 +298,11 @@ async def _resolve_tick() -> None:
     done, closing the crash window where in-memory state and the DB could
     disagree. Costs a brief pause on death events only; deaths aren't
     happening every tick, and a local Postgres write is fast."""
-    
+
     import logging
+
     log = logging.getLogger(__name__)
 
-    
     # 1. Snapshot current_target at tick start — one pass, no mid-tick mutation.
     snapshot = list(current_target.items())
     dead: set[EntityRef] = set()
@@ -298,7 +314,11 @@ async def _resolve_tick() -> None:
         if attacker in dead or target in dead:
             continue
         if not _same_room(attacker, target):
-            log.debug("combat tick: %s and %s no longer share a room, whiffing", attacker, target)
+            log.debug(
+                "combat tick: %s and %s no longer share a room, whiffing",
+                attacker,
+                target,
+            )
             continue  # silent whiff; reassignment pass handles retargeting
 
         if attacker not in engaged_with.get(target, ()):
@@ -312,6 +332,7 @@ async def _resolve_tick() -> None:
         room_id = _room_id(attacker)
         if room_id is not None:
             from rooms import broadcast_to_room
+
             await broadcast_to_room(
                 room_id,
                 f"{_display_name(attacker)} hits {_display_name(target)} for {roll} damage!",
@@ -319,7 +340,9 @@ async def _resolve_tick() -> None:
 
         hp = _current_hp(target)
         if hp is not None and hp <= 0:
-            log.info("combat tick: %s has been reduced to %d hp and will die", target, hp)
+            log.info(
+                "combat tick: %s has been reduced to %d hp and will die", target, hp
+            )
             dead.add(target)
 
     # 3. Death pass — after full damage pass, using post-damage HP.
@@ -330,7 +353,9 @@ async def _resolve_tick() -> None:
         death_room_id = _room_id(entity)
         death_name = _display_name(entity)
 
-        log.info("combat tick: %s (%s) dies in room %s", entity, death_name, death_room_id)
+        log.info(
+            "combat tick: %s (%s) dies in room %s", entity, death_name, death_room_id
+        )
 
         _clear_as_target(entity)
         disengage_self(entity)
@@ -341,9 +366,12 @@ async def _resolve_tick() -> None:
 
         if death_room_id is not None:
             from rooms import broadcast_to_room
+
             capitalized = f"{death_name[0].upper()}{death_name[1:]}"
             await broadcast_to_room(death_room_id, f"{capitalized} dies!")
-            await registry.broadcast_to_all(f"\n   \033[0;31m<< The blood of {capitalized} has been spilled. >>\033[0m   \n")
+            await registry.broadcast_to_all(
+                f"\n   \033[0;31m<< The blood of {capitalized} has been spilled. >>\033[0m   \n"
+            )
 
     # 4. Reassignment pass — absent current_target with a present alternative.
     for attacker, target in list(current_target.items()):
@@ -354,15 +382,26 @@ async def _resolve_tick() -> None:
 
         alt = _find_present_alternative(attacker, exclude=target)
         if alt is not None:
-            log.debug("combat tick: reassigning %s from absent %s to %s", attacker, target, alt)
+            log.debug(
+                "combat tick: reassigning %s from absent %s to %s",
+                attacker,
+                target,
+                alt,
+            )
             current_target[attacker] = alt
         else:
-            log.debug("combat tick: %s has no present alternative to absent %s", attacker, target)
+            log.debug(
+                "combat tick: %s has no present alternative to absent %s",
+                attacker,
+                target,
+            )
         # else: leave current_target pointed at the absent target — resumes
         # automatically once attacker/target share a room again.
 
 
-def _find_present_alternative(attacker: EntityRef, exclude: EntityRef) -> EntityRef | None:
+def _find_present_alternative(
+    attacker: EntityRef, exclude: EntityRef
+) -> EntityRef | None:
     for candidate in engaged_with.get(attacker, ()):
         if candidate != exclude and _same_room(attacker, candidate):
             return candidate
@@ -399,7 +438,7 @@ async def _respawn_player(ref: EntityRef) -> None:
         player.current_sp = player.max_sp
         player.current_ep = player.max_ep
         player.current_room_id = 1
-                
+
     await broadcast_to_room(1, "A soul is returned to life by the grace of the gods.")
 
     pool = get_pool()

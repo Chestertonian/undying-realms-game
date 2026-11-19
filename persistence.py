@@ -20,9 +20,7 @@ log = logging.getLogger(__name__)
 
 FLUSH_INTERVAL_SECONDS = 1.0
 
-FLUSH_FUNCTIONS = [
-    flush_dirty_players
-]
+FLUSH_FUNCTIONS = [flush_dirty_players]
 
 
 async def flush_loop() -> None:

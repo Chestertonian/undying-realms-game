@@ -2,7 +2,7 @@
 Item templates and instances.
 
 Templates carry static data (name, description, keywords, type). Instances
-currently carry only location — no mutable state. Type-specific mutable state 
+currently carry only location — no mutable state. Type-specific mutable state
 (e.g. torch charges) will live in future per-type sidecar tables keyed by
 instance id, not on item_instances itself.
 
@@ -77,8 +77,7 @@ async def load_items() -> None:
             "FROM item_templates"
         )
         instance_rows = await conn.fetch(
-            "SELECT id, template_id, location_kind, location_id "
-            "FROM item_instances"
+            "SELECT id, template_id, location_kind, location_id " "FROM item_instances"
         )
 
     templates.clear()
@@ -123,7 +122,8 @@ def item_description(instance: ItemInstance) -> str:
 def items_in_room(room_id: int) -> list[ItemInstance]:
     """Scan-on-demand over `instances`. No maintained room->item index."""
     return [
-        inst for inst in instances.values()
+        inst
+        for inst in instances.values()
         if inst.location_kind == "room" and inst.location_id == room_id
     ]
 
@@ -131,12 +131,15 @@ def items_in_room(room_id: int) -> list[ItemInstance]:
 def items_in_inventory(player_id: int) -> list[ItemInstance]:
     """Scan-on-demand over `instances`. No maintained player->item index."""
     return [
-        inst for inst in instances.values()
+        inst
+        for inst in instances.values()
         if inst.location_kind == "player" and inst.location_id == player_id
     ]
 
 
-async def move_item(instance: ItemInstance, location_kind: str, location_id: int) -> None:
+async def move_item(
+    instance: ItemInstance, location_kind: str, location_id: int
+) -> None:
     """
     Move an item instance to a new location and write through
     immediately. Direct synchronous write, not dirty-flagged — item
@@ -263,7 +266,8 @@ async def cmd_give(connection: Connection, args: str) -> None:
 
     recipient_conn = next(
         (
-            conn for conn in registry.connections()
+            conn
+            for conn in registry.connections()
             if conn.player is not None
             and conn is not connection
             and conn.player.current_room_id == room_id

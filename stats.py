@@ -45,7 +45,9 @@ class StatRoller:
         return self.current_roll
 
 
-def assign_stats(rolled_values: list[int], assignment: dict[str, int]) -> dict[str, int]:
+def assign_stats(
+    rolled_values: list[int], assignment: dict[str, int]
+) -> dict[str, int]:
     """
     Validate and build the final stats dict from a player's chosen
     assignment of rolled values to attributes.
@@ -63,6 +65,7 @@ def assign_stats(rolled_values: list[int], assignment: dict[str, int]) -> dict[s
         raise ValueError("Assigned values must exactly match the rolled values.")
 
     return dict(assignment)
+
 
 def compute_max_hp(stats: dict[str, int]) -> int:
     # TODO: build actual formula

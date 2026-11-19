@@ -29,8 +29,8 @@ class ConnectionRegistry:
     def unregister(self, player_id: int) -> None:
         self._connections.pop(player_id, None)
         from combat import on_player_disconnect
-        on_player_disconnect(player_id)
 
+        on_player_disconnect(player_id)
 
     def get_connection(self, player_id: int) -> Connection | None:
         return self._connections.get(player_id)
@@ -51,10 +51,10 @@ class ConnectionRegistry:
         conn.player = None
         await conn.close()
         self.unregister(player_id)
-    
+
     def connections(self) -> Iterable[Connection]:
         return self._connections.values()
-    
+
     async def broadcast_to_all(self, message: str) -> None:
         for conn in self._connections.values():
             if conn.player is not None:

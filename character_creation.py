@@ -15,7 +15,6 @@ from player import Player, apply_race_modifiers, create_player, name_is_taken
 from stats import ATTRIBUTES, StatRoller, assign_stats
 from badnames import is_reserved_name
 
-
 NAME_MIN_LENGTH = 3
 NAME_MAX_LENGTH = 16
 GENDERS = ("male", "female")
@@ -50,11 +49,16 @@ class CharacterCreationHandler:
             await self.conn.send("Choose a character name:")
             raw = await self.conn.receive_line()
             if raw is None:
-                raise ConnectionAbortedError("Connection closed during character creation.")
+                raise ConnectionAbortedError(
+                    "Connection closed during character creation."
+                )
 
             name = raw.strip().capitalize()
 
-            if not (NAME_MIN_LENGTH <= len(name) <= NAME_MAX_LENGTH) or not name.isalpha():
+            if (
+                not (NAME_MIN_LENGTH <= len(name) <= NAME_MAX_LENGTH)
+                or not name.isalpha()
+            ):
                 await self.conn.send(
                     f"Names must be {NAME_MIN_LENGTH}-{NAME_MAX_LENGTH} letters, no numbers or symbols."
                 )
@@ -63,7 +67,7 @@ class CharacterCreationHandler:
             if await name_is_taken(name):
                 await self.conn.send("That name is already taken.")
                 continue
-        
+
             if is_reserved_name(name):
                 await self.conn.send("That name is reserved. Please choose another.")
                 continue  # reprompt
@@ -82,7 +86,9 @@ class CharacterCreationHandler:
         while True:
             raw = await self.conn.receive_line()
             if raw is None:
-                raise ConnectionAbortedError("Connection closed during character creation.")
+                raise ConnectionAbortedError(
+                    "Connection closed during character creation."
+                )
             try:
                 index = int(raw.strip()) - 1
                 return race_names[index]
@@ -94,7 +100,9 @@ class CharacterCreationHandler:
         while True:
             raw = await self.conn.receive_line()
             if raw is None:
-                raise ConnectionAbortedError("Connection closed during character creation.")
+                raise ConnectionAbortedError(
+                    "Connection closed during character creation."
+                )
             choice = raw.strip().lower()
             if choice in GENDERS:
                 return choice
@@ -108,7 +116,9 @@ class CharacterCreationHandler:
         while True:
             raw = await self.conn.receive_line()
             if raw is None:
-                raise ConnectionAbortedError("Connection closed during character creation.")
+                raise ConnectionAbortedError(
+                    "Connection closed during character creation."
+                )
             try:
                 index = int(raw.strip()) - 1
                 return BACKGROUNDS[index]
@@ -129,7 +139,9 @@ class CharacterCreationHandler:
 
             raw = await self.conn.receive_line()
             if raw is None:
-                raise ConnectionAbortedError("Connection closed during character creation.")
+                raise ConnectionAbortedError(
+                    "Connection closed during character creation."
+                )
             choice = raw.strip().lower()
 
             if choice == "r" and roller.can_reroll():
@@ -149,7 +161,9 @@ class CharacterCreationHandler:
             await self.conn.send("Example: 14 12 9 15 8 10")
             raw = await self.conn.receive_line()
             if raw is None:
-                raise ConnectionAbortedError("Connection closed during character creation.")
+                raise ConnectionAbortedError(
+                    "Connection closed during character creation."
+                )
 
             parts = raw.strip().split()
             if len(parts) != len(ATTRIBUTES):

@@ -12,20 +12,47 @@ TODO: Expand this at some point.
 
 from __future__ import annotations
 
-RESERVED_NAMES: frozenset[str] = frozenset({
-    # command verbs currently in the dispatch table
-    "look", "quit", "say", "emote", "chat", "who", "hp", "score"
-
-    # movement directions and common aliases
-    "north", "south", "east", "west", "up", "down",
-    "n", "s", "e", "w", "u", "d", "l"
-
-    # dispatch/targeting-ambiguous words
-    "self", "me", "here", "all", "it", "him"
-
-    # reserved for future admin/system use
-    "admin", "system", "server", "god", "test", "tester"
-})
+RESERVED_NAMES: frozenset[str] = frozenset(
+    {
+        # command verbs currently in the dispatch table
+        "look",
+        "quit",
+        "say",
+        "emote",
+        "chat",
+        "who",
+        "hp",
+        "score"
+        # movement directions and common aliases
+        "north",
+        "south",
+        "east",
+        "west",
+        "up",
+        "down",
+        "n",
+        "s",
+        "e",
+        "w",
+        "u",
+        "d",
+        "l"
+        # dispatch/targeting-ambiguous words
+        "self",
+        "me",
+        "here",
+        "all",
+        "it",
+        "him"
+        # reserved for future admin/system use
+        "admin",
+        "system",
+        "server",
+        "god",
+        "test",
+        "tester",
+    }
+)
 
 
 def is_reserved_name(name: str) -> bool:

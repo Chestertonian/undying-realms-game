@@ -34,9 +34,7 @@ class Account:
 
 async def account_exists(username: str) -> bool:
     pool = db.get_pool()
-    row = await pool.fetchval(
-        "SELECT 1 FROM accounts WHERE username = $1", username
-    )
+    row = await pool.fetchval("SELECT 1 FROM accounts WHERE username = $1", username)
     return row is not None
 
 

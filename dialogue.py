@@ -51,7 +51,7 @@ async def cmd_ask(connection: Connection, args: str) -> None:
         return
 
     npc_part = args[:idx].strip()
-    topic = args[idx + len(" about "):].strip()
+    topic = args[idx + len(" about ") :].strip()
 
     if not npc_part or not topic:
         await connection.send("Ask whom about what? Try: ask <npc> about <topic>")
@@ -65,6 +65,8 @@ async def cmd_ask(connection: Connection, args: str) -> None:
     response = get_response(instance.template_id, topic)
     if response is None:
         name = npcs.npc_name(instance)
-        response = f"{name[0].upper()}{name[1:]} doesn't seem to know anything about that."
+        response = (
+            f"{name[0].upper()}{name[1:]} doesn't seem to know anything about that."
+        )
 
     await connection.send(response)

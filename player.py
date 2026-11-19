@@ -12,6 +12,7 @@ from dataclasses import dataclass
 from datetime import datetime
 
 from typing import TYPE_CHECKING
+
 if TYPE_CHECKING:
     from rooms import Room
 
@@ -24,8 +25,8 @@ from registry import registry
 
 from stats import compute_max_hp, compute_max_sp, compute_max_ep
 
-
 STARTING_ROOM_ID = 1  # spawn point for newly created characters
+
 
 @dataclass
 class Player:
@@ -45,10 +46,11 @@ class Player:
     current_ep: int
     max_ep: int
     dirty: bool = False
-    
+
     @property
     def room(self) -> Room:
         return rooms[self.current_room_id]
+
 
 def apply_race_modifiers(base_stats: dict[str, int], race: str) -> dict[str, int]:
     """
@@ -95,6 +97,7 @@ async def load_player(player_id: int) -> Player | None:
         return None
     return Player(**dict(row))
 
+
 async def create_player(
     account_id: int,
     name: str,
@@ -117,8 +120,19 @@ async def create_player(
             "VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) "
             "RETURNING id, account_id, name, race, gender, background, stats, current_room_id, "
             "created_at, current_hp, max_hp, current_sp, max_sp, current_ep, max_ep",
-            account_id, name, race, gender, background, stats, STARTING_ROOM_ID,
-            max_hp, max_hp, max_sp, max_sp, max_ep, max_ep,
+            account_id,
+            name,
+            race,
+            gender,
+            background,
+            stats,
+            STARTING_ROOM_ID,
+            max_hp,
+            max_hp,
+            max_sp,
+            max_sp,
+            max_ep,
+            max_ep,
         )
     except asyncpg.UniqueViolationError as exc:
         raise ValueError(f"Character creation failed: {exc}") from exc
@@ -150,12 +164,15 @@ async def flush_dirty_players() -> None:
             WHERE id = $8
             """,
             player.current_room_id,
-            player.current_hp, player.max_hp,
-            player.current_sp, player.max_sp,
-            player.current_ep, player.max_ep,
+            player.current_hp,
+            player.max_hp,
+            player.current_sp,
+            player.max_sp,
+            player.current_ep,
+            player.max_ep,
             player.id,
         )
-        player.dirty = False        
+        player.dirty = False
 
 
 def adjust_current_hp(player: Player, delta: int) -> None:
@@ -167,7 +184,7 @@ def adjust_current_sp(player: Player, delta: int) -> None:
     player.current_sp = max(0, min(player.max_sp, player.current_sp + delta))
     player.dirty = True
 
-        
+
 def adjust_current_ep(player: Player, delta: int) -> None:
     """Adjust current_ep by delta, clamped to [0, max_ep], and mark
     the player dirty. Movement is the only caller today; combat will
@@ -175,7 +192,8 @@ def adjust_current_ep(player: Player, delta: int) -> None:
     pattern rather than inlining clamp+dirty logic at each call site."""
     player.current_ep = max(0, min(player.max_ep, player.current_ep + delta))
     player.dirty = True
-    
+
+
 def player_description(player: Player) -> str:
     """
     Placeholder auto-generated description from existing character-creation
@@ -184,4 +202,6 @@ def player_description(player: Player) -> str:
     adjust the template once real content conventions for `background`
     are settled. Not persisted; recomputed on every look.
     """
-    return f"You see {player.name}, a {player.gender} {player.race} ({player.background})."
+    return (
+        f"You see {player.name}, a {player.gender} {player.race} ({player.background})."
+    )

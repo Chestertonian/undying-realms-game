@@ -8,8 +8,17 @@ from connection import Connection
 from registry import registry
 
 _NUMBER_WORDS = {
-    0: "No", 1: "One", 2: "Two", 3: "Three", 4: "Four", 5: "Five",
-    6: "Six", 7: "Seven", 8: "Eight", 9: "Nine", 10: "Ten",
+    0: "No",
+    1: "One",
+    2: "Two",
+    3: "Three",
+    4: "Four",
+    5: "Five",
+    6: "Six",
+    7: "Seven",
+    8: "Eight",
+    9: "Nine",
+    10: "Ten",
 }
 
 
@@ -44,10 +53,13 @@ async def cmd_who(connection: Connection, args: str) -> None:
     noun = "player" if count == 1 else "players"
     await connection.send(border)
     await connection.send(f"{_count_word(count)} {noun} online.".center(width))
-    
+
+
 async def cmd_hp(connection: Connection, args: str) -> None:
     p = connection.player
-    await connection.send(f"HP: {p.current_hp}/{p.max_hp}   SP: {p.current_sp}/{p.max_sp}   EP: {p.current_ep}/{p.max_ep}")
+    await connection.send(
+        f"HP: {p.current_hp}/{p.max_hp}   SP: {p.current_sp}/{p.max_sp}   EP: {p.current_ep}/{p.max_ep}"
+    )
 
 
 async def cmd_score(connection: Connection, args: str) -> None:

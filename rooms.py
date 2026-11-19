@@ -19,12 +19,14 @@ from db import get_pool
 import npcs
 import items
 import targeting
+import textwrap
 from text_utils import number_to_words
 
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from player import Player
+
 
 @dataclass
 class Room:
@@ -67,18 +69,23 @@ async def load_rooms() -> None:
             raise ValueError(f"Exit references unknown target_room_id {target_id}")
 
         rooms[room_id].exits[row["direction"]] = rooms[target_id]
-        
-async def broadcast_to_room(room_id: int, message: str, exclude: list[Connection] | None = None) -> None:
+
+
+async def broadcast_to_room(
+    room_id: int, message: str, exclude: list[Connection] | None = None
+) -> None:
     exclude = exclude or []
     for conn in registry.connections():
         player = conn.player
         if player is None or player.current_room_id != room_id or conn in exclude:
             continue
         await conn.send(message)
-        
+
+
 async def describe_room_to(connection: Connection, room: Room) -> None:
     await connection.send("   " + room.name)
-    await connection.send(room.description)
+    wrapped = textwrap.fill(room.description, width=80)
+    await connection.send(wrapped)
 
     occupant_lines = []
 
@@ -114,7 +121,6 @@ async def describe_room_to(connection: Connection, room: Room) -> None:
     if occupant_lines:
         await connection.send("")
         await connection.send("\n".join(occupant_lines))
-    
 
     if room.exits:
         await connection.send("   Exits: " + ", ".join(sorted(room.exits)))
@@ -137,8 +143,9 @@ async def resolve_look_target(raw: str, room: Room) -> str | None:
     target = raw.lower()
 
     from player import player_description  # local import avoids a cycle
-                                              # (player.py imports `rooms`
-                                              # for Player.room)
+
+    # (player.py imports `rooms`
+    # for Player.room)
 
     for conn in registry.connections():
         player = conn.player
@@ -146,7 +153,6 @@ async def resolve_look_target(raw: str, room: Room) -> str | None:
             if player.name.lower() == target:
                 return player_description(player)
 
-    
     instance = npcs.resolve_npc_target(raw, room.id)
     if instance is not None:
         return npcs.npc_description(instance)

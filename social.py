@@ -52,7 +52,9 @@ async def cmd_say(connection: Connection, args: str) -> None:
             return
 
         if target_conn is connection:
-            await connection.send("You can't say something to yourself. Well, you can, but it's odd.")
+            await connection.send(
+                "You can't say something to yourself. Well, you can, but it's odd."
+            )
             return
 
         target_player = target_conn.player
@@ -64,15 +66,18 @@ async def cmd_say(connection: Connection, args: str) -> None:
             exclude=[connection, target_conn],
         )
         return
-    
+
     if args:
         args = args[0].upper() + args[1:]
-        
+
     if args[-1] not in ".!?":
         args += "."
 
     await connection.send(f'You say, "{args}"')
-    await broadcast_to_room(room_id, f'{player.name} says, "{args}"', exclude=[connection])
+    await broadcast_to_room(
+        room_id, f'{player.name} says, "{args}"', exclude=[connection]
+    )
+
 
 async def cmd_emote(connection: Connection, args: str) -> None:
     args = args.strip()
@@ -85,4 +90,6 @@ async def cmd_emote(connection: Connection, args: str) -> None:
 
     player = connection.player
     message = f"{player.name} {args}"
-    await broadcast_to_room(player.current_room_id, message)  # no exclude — sender sees it too
+    await broadcast_to_room(
+        player.current_room_id, message
+    )  # no exclude — sender sees it too

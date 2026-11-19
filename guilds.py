@@ -13,6 +13,7 @@ import db
 
 if TYPE_CHECKING:
     from connection import Connection
+    from player import Player
 
 
 @dataclass
@@ -24,6 +25,10 @@ class Guild:
 
 guilds: dict[int, Guild] = {}
 
+
+
+def in_guild(player: Player, name: str) -> bool:
+    return player.guild_id is not None and guilds[player.guild_id].name == name
 
 async def load_guilds() -> None:
     """Load all guilds into the module-level `guilds` dict. Call once at

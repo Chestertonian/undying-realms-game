@@ -46,9 +46,10 @@ class Player:
     current_ep: int
     max_ep: int
     guild_id: int | None = None
+    is_staff: bool = False
     roles: set[str] = field(default_factory=set)
     dirty: bool = False
-    is_staff: bool = False
+
 
 
     @property

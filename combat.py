@@ -31,6 +31,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import random
+import registry
 from rooms import *
 from typing import Literal, TYPE_CHECKING
 
@@ -342,6 +343,7 @@ async def _resolve_tick() -> None:
             from rooms import broadcast_to_room
             capitalized = f"{death_name[0].upper()}{death_name[1:]}"
             await broadcast_to_room(death_room_id, f"{capitalized} dies!")
+            await registry.broadcast_to_all(f"The blood of {capitalized} has been spilled by an adventurer.")
 
     # 4. Reassignment pass — absent current_target with a present alternative.
     for attacker, target in list(current_target.items()):

@@ -21,7 +21,7 @@ CHANNELS: dict[str, Channel] = {
     "chat": Channel(name="chat", tag="<CHAT>", color="\x1b[36m"),  # cyan
     "warrior": Channel(
         name="warrior",
-        tag="<WARRIOR>",
+        tag="<warrior>",
         color="\x1b[31m",  # red
         guild_name="Warriors' Guild",
     ),

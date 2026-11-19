@@ -15,7 +15,7 @@ from connection import Connection
 from registry import registry
 
 from social import cmd_say, cmd_emote
-from channels import cmd_chat, cmd_warrior
+from channels import cmd_chat, cmd_warrior, cmd_staff, cmd_world
 from movement import MOVEMENT_COMMANDS
 from info import cmd_who, cmd_hp, cmd_score
 from items import cmd_get, cmd_drop, cmd_give, cmd_inventory
@@ -27,6 +27,7 @@ import combat
 from rooms import describe_room_to, resolve_look_target
 
 from command_types import CommandHandler
+
 
 async def cmd_look(connection: Connection, args: str) -> None:
     room = connection.player.room
@@ -43,7 +44,7 @@ async def cmd_look(connection: Connection, args: str) -> None:
     keyword = target.split(maxsplit=1)[0]
 
     description = await resolve_look_target(keyword, room)
-    
+
     # Check the looker's own inventory.
     if description is None:
         held = items.resolve_item_in_inventory(keyword, connection.player.id)
@@ -56,10 +57,12 @@ async def cmd_look(connection: Connection, args: str) -> None:
 
     await connection.send(description)
 
+
 async def cmd_quit(connection: Connection, args: str) -> None:
     await connection.send("Goodbye.")
     connection.player = None  # sentinel: signals the caller's loop to stop
-    
+
+
 async def cmd_kill(connection: Connection, args: str) -> None:
     actor = ("player", connection.player.id)
     room_id = connection.player.current_room_id
@@ -83,28 +86,30 @@ async def cmd_flee(connection: Connection, args: str) -> None:
 
 COMMAND_TABLE: dict[str, CommandHandler] = {
     "look": cmd_look,
-    "l":    cmd_look,
+    "l": cmd_look,
     "quit": cmd_quit,
-    "say":  cmd_say,
+    "say": cmd_say,
     "chat": cmd_chat,
     "emote": cmd_emote,
     ";": cmd_emote,
     "who": cmd_who,
     "hp": cmd_hp,
     "score": cmd_score,
-    "ask":  cmd_ask,
-    "target":   cmd_target,
-    "kill":     cmd_kill,
-    "attack":   cmd_kill,
-    "flee":     cmd_flee,
-    "get":       cmd_get,
-    "drop":      cmd_drop,
-    "give":      cmd_give,
+    "ask": cmd_ask,
+    "target": cmd_target,
+    "kill": cmd_kill,
+    "attack": cmd_kill,
+    "flee": cmd_flee,
+    "get": cmd_get,
+    "drop": cmd_drop,
+    "give": cmd_give,
     "inventory": cmd_inventory,
-    "inv":       cmd_inventory,
-    "i":         cmd_inventory,
-    "join":      cmd_join,
-    "warrior":   cmd_warrior,
+    "inv": cmd_inventory,
+    "i": cmd_inventory,
+    "join": cmd_join,
+    "warrior": cmd_warrior,
+    "staff": cmd_staff,
+    "world": cmd_world,
     **MOVEMENT_COMMANDS,
 }
 

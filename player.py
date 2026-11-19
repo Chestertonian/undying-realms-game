@@ -8,7 +8,7 @@ account creation/lookup is structured.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import field, dataclass
 from datetime import datetime
 
 from typing import TYPE_CHECKING
@@ -46,6 +46,7 @@ class Player:
     current_ep: int
     max_ep: int
     guild_id: int | None = None
+    roles: set[str] = field(default_factory=set)
     dirty: bool = False
 
     @property
@@ -90,13 +91,18 @@ async def load_player(player_id: int) -> Player | None:
     pool = db.get_pool()
     row = await pool.fetchrow(
         "SELECT id, account_id, name, race, gender, background, stats, current_room_id, "
-        "created_at, current_hp, max_hp, current_sp, max_sp, current_ep, max_ep "
-        "FROM players WHERE id = $1",
+        "created_at, current_hp, max_hp, current_sp, max_sp, current_ep, max_ep, "
+        "guild_id, is_staff FROM players WHERE id = $1",
         player_id,
     )
     if row is None:
         return None
-    return Player(**dict(row))
+    player = Player(**dict(row))
+    role_rows = await pool.fetch(
+        "SELECT role FROM player_roles WHERE player_id = $1", player_id
+    )
+    player.roles = {r["role"] for r in role_rows}
+    return player
 
 
 async def create_player(

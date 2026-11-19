@@ -31,6 +31,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import random
+from rooms import *
 from typing import Literal, TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -396,6 +397,8 @@ async def _respawn_player(ref: EntityRef) -> None:
         player.current_sp = player.max_sp
         player.current_ep = player.max_ep
         player.current_room_id = 1
+                
+    broadcast_to_room(1, "A soul is returned to life by the grace of the gods.")
 
     pool = get_pool()
     async with pool.acquire() as conn:

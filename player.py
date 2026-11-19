@@ -48,6 +48,8 @@ class Player:
     guild_id: int | None = None
     roles: set[str] = field(default_factory=set)
     dirty: bool = False
+    is_staff: bool = False
+
 
     @property
     def room(self) -> Room:

@@ -17,6 +17,7 @@ from login_handler import LoginHandler
 from registry import registry
 from rooms import load_rooms
 from items import load_items
+from guilds import load_guilds
 from npcs import load_npcs
 from dialogue import load_dialogue
 from commands import *
@@ -86,6 +87,9 @@ async def main() -> None:
     log.info("Dialogue loaded.")
     await load_items()
     log.info("Items loaded.")
+    await load_guilds()
+    log.info("Guilds loaded.")
+    
     flush_task = asyncio.create_task(flush_loop())
     log.info("Flush loop started.")
     regen_task = asyncio.create_task(regen_loop())

@@ -6,6 +6,7 @@ from __future__ import annotations
 
 from connection import Connection
 from registry import registry
+import guilds
 
 _NUMBER_WORDS = {
     0: "No",
@@ -69,6 +70,10 @@ async def cmd_score(connection: Connection, args: str) -> None:
     def row(label: str, value: str) -> str:
         return f"  {label:<12}{value}"
 
+    guild_rows = (
+        [row("Guild:", guilds.guild_name(p.guild_id))] if p.guild_id is not None else []
+    )
+
     lines = [
         "=" * width,
         " Character Sheet ".center(width, "="),
@@ -77,6 +82,7 @@ async def cmd_score(connection: Connection, args: str) -> None:
         row("Race:", p.race.capitalize()),
         row("Gender:", p.gender.capitalize()),
         row("Background:", p.background),
+        *guild_rows,
         "-" * width,
         row("STR:", str(p.stats["STR"])),
         row("DEX:", str(p.stats["DEX"])),

@@ -45,6 +45,7 @@ class Player:
     max_sp: int
     current_ep: int
     max_ep: int
+    guild_id: int | None = None
     dirty: bool = False
 
     @property
@@ -78,7 +79,7 @@ async def load_characters_for_account(account_id: int) -> list[Player]:
     pool = db.get_pool()
     rows = await pool.fetch(
         "SELECT id, account_id, name, race, gender, background, stats, current_room_id, "
-        "created_at, current_hp, max_hp, current_sp, max_sp, current_ep, max_ep "
+        "created_at, current_hp, max_hp, current_sp, max_sp, current_ep, max_ep, guild_id "
         "FROM players WHERE account_id = $1 ORDER BY created_at",
         account_id,
     )

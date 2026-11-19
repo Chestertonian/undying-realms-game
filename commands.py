@@ -19,6 +19,7 @@ from channels import cmd_chat
 from movement import MOVEMENT_COMMANDS
 from info import cmd_who, cmd_hp, cmd_score
 from items import cmd_get, cmd_drop, cmd_give, cmd_inventory
+import items
 from dialogue import cmd_ask
 import combat
 
@@ -41,6 +42,13 @@ async def cmd_look(connection: Connection, args: str) -> None:
     keyword = target.split(maxsplit=1)[0]
 
     description = await resolve_look_target(keyword, room)
+    
+    # Check the looker's own inventory.
+    if description is None:
+        held = items.resolve_item_in_inventory(keyword, connection.player.id)
+        if held is not None:
+            description = items.item_description(held)
+
     if description is None:
         await connection.send("You don't see that here.")
         return

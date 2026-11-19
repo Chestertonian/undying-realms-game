@@ -22,11 +22,12 @@ import db
 from races import RACES
 from rooms import rooms
 from registry import registry
+import logging
 
 from stats import compute_max_hp, compute_max_sp, compute_max_ep
 
 STARTING_ROOM_ID = 1  # spawn point for newly created characters
-
+log = logging.getLogger(__name__)
 
 @dataclass
 class Player:
@@ -103,6 +104,13 @@ async def load_player(player_id: int) -> Player | None:
         "SELECT role FROM player_roles WHERE player_id = $1", player_id
     )
     player.roles = {r["role"] for r in role_rows}
+    log.warning(
+        "load_player %s: guild_id=%r is_staff=%r roles=%r",
+        player.name,
+        player.guild_id,
+        player.is_staff,
+        player.roles,
+    )
     return player
 
 

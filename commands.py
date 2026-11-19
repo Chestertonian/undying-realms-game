@@ -76,7 +76,7 @@ async def cmd_target(connection: Connection, args: str) -> None:
 async def cmd_flee(connection: Connection, args: str) -> None:
     actor = ("player", connection.player.id)
     room_id = connection.player.current_room_id
-    message = combat.cmd_flee(actor, room_id)
+    message = await combat.cmd_flee(actor, room_id)
     await connection.send(message)
 
 

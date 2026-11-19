@@ -15,7 +15,7 @@ from connection import Connection
 from registry import registry
 
 from social import cmd_say, cmd_emote
-from channels import cmd_chat 
+from channels import cmd_chat, cmd_warrior
 from movement import MOVEMENT_COMMANDS
 from info import cmd_who, cmd_hp, cmd_score
 from items import cmd_get, cmd_drop, cmd_give, cmd_inventory
@@ -104,6 +104,7 @@ COMMAND_TABLE: dict[str, CommandHandler] = {
     "inv":       cmd_inventory,
     "i":         cmd_inventory,
     "join":      cmd_join,
+    "warrior":   cmd_warrior,
     **MOVEMENT_COMMANDS,
 }
 

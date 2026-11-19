@@ -6,6 +6,7 @@ that guild's hall; `join` there joins that guild.
 from __future__ import annotations
 
 from dataclasses import dataclass
+import registry
 from typing import TYPE_CHECKING
 
 import db
@@ -74,4 +75,4 @@ async def cmd_join(connection: Connection, args: str) -> None:
         return
 
     p.guild_id = hall_guild_id  # in-memory update only after the write succeeds
-    await connection.send(f"You have joined the {guild.name}.")
+    await registry.broadcast_to_all(f"  <<{p.name} joins the {guild.name}! >>")

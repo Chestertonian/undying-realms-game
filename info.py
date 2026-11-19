@@ -7,6 +7,9 @@ from __future__ import annotations
 from connection import Connection
 from registry import registry
 import guilds
+from roles import *
+
+HEADERS = ("Name", "Gender", "Race", "Guild", "Title")
 
 _NUMBER_WORDS = {
     0: "No",
@@ -29,32 +32,47 @@ def _count_word(n: int) -> str:
 
 async def cmd_who(connection: Connection, args: str) -> None:
     players = sorted(
-        (conn.player for conn in registry.connections() if conn.player is not None),
+        (
+            conn.player
+            for conn in registry.connections()
+            if conn.player is not None and not conn.player.is_staff
+        ),
         key=lambda p: p.name.lower(),
     )
 
-    rows = [(p.name, p.gender.capitalize(), p.race.capitalize()) for p in players]
+    rows = [
+        (
+            p.name,
+            p.gender.capitalize(),
+            p.race.capitalize(),
+            guilds.guild_name(p.guild_id) if p.guild_id is not None else "-",
+            ", ".join(role_names(p.roles)) or "-",
+        )
+        for p in players
+    ]
 
-    name_w = max((len(r[0]) for r in rows), default=4)
-    gender_w = max((len(r[1]) for r in rows), default=6)
+    col_w = [max([len(h)] + [len(r[i]) for r in rows]) for i, h in enumerate(HEADERS)]
+
+    def fmt(cells) -> str:
+        return ("  " + "   ".join(c.ljust(w) for c, w in zip(cells, col_w))).rstrip()
 
     header = " Adventurers Online "
-    width = max(len(header) + 4, name_w + gender_w + 12)
+    width = max(len(header) + 4, len(fmt(HEADERS)))
     border = "=" * width
 
     await connection.send(border)
     await connection.send(header.center(width, "="))
     await connection.send(border)
+    await connection.send(fmt(HEADERS))
+    await connection.send("-" * width)
 
-    for name, gender, race in rows:
-        line = f"  {name.ljust(name_w)}   {gender.ljust(gender_w)}   {race}"
-        await connection.send(line)
+    for r in rows:
+        await connection.send(fmt(r))
 
     count = len(rows)
     noun = "player" if count == 1 else "players"
     await connection.send(border)
     await connection.send(f"{_count_word(count)} {noun} online.".center(width))
-
 
 async def cmd_hp(connection: Connection, args: str) -> None:
     p = connection.player

@@ -21,6 +21,9 @@ ROLES: dict[str, Role] = {
     ),
 }
 
+def role_names(role_keys: set[str]) -> list[str]:
+    """Sorted display names for a set of role keys; unregistered keys are skipped."""
+    return sorted(ROLES[k].name for k in role_keys if k in ROLES)
 
 def find_role(raw: str) -> Role | None:
     """Match 'Warrior GM', 'warrior gm', or 'warrior_gm'."""

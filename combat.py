@@ -224,6 +224,7 @@ async def cmd_kill(actor: EntityRef, keyword: str, room_id: int) -> str:
     log.info("combat: %s attacks %s in room %s", actor, target, room_id)
     constructed_string = f"{_display_name(actor)} attacks {_display_name(target)}!"
     await broadcast_to_room(room_id, constructed_string)
+    return None
 
 
 def cmd_target(actor: EntityRef, keyword: str, room_id: int) -> str:
@@ -382,6 +383,7 @@ async def _resolve_tick() -> None:
             await registry.broadcast_to_all(
                 f"\n   \033[0;31m<< The blood of {capitalized} has been spilled. >>\033[0m   \n"
             )
+            #TODO: No alerts on NPC deaths
         
         killer = killers.get(entity)
         if xp_award > 0 and killer is not None and killer[0] == "player":

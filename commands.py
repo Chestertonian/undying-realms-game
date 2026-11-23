@@ -69,7 +69,8 @@ async def cmd_kill(connection: Connection, args: str) -> None:
     actor = ("player", connection.player.id)
     room_id = connection.player.current_room_id
     message = await combat.cmd_kill(actor, args, room_id)
-    await connection.send(message)
+    if message is not None:
+        await connection.send(message)
 
 
 async def cmd_target(connection: Connection, args: str) -> None:

@@ -18,6 +18,7 @@ if TYPE_CHECKING:
 log = logging.getLogger(__name__)
 
 MAX_LEVEL = 30
+RESOURCE_GAIN_PER_LEVEL = 5
 
 
 def advance_cost(level: int) -> int:
@@ -77,18 +78,28 @@ async def cmd_advance(connection: Connection, args: str) -> None:
         )
         return
 
-    # Atomic: succeeds only if level and XP are still what we checked.
+    # Atomic: level, XP and the new maxima change together or not at all.
     row = await db.get_pool().fetchrow(
-        "UPDATE players SET xp = xp - $1, level = level + 1 "
+        "UPDATE players SET xp = xp - $1, level = level + 1, "
+        "max_hp = max_hp + $4, max_sp = max_sp + $4, max_ep = max_ep + $4 "
         "WHERE id = $2 AND level = $3 AND xp >= $1 "
-        "RETURNING xp, level",
+        "RETURNING xp, level, max_hp, max_sp, max_ep",
         cost,
         p.id,
         p.level,
+        RESOURCE_GAIN_PER_LEVEL,
     )
     if row is None:
         await connection.send("You are unable to advance right now.")
         return
 
+    gain = RESOURCE_GAIN_PER_LEVEL
     p.xp, p.level = row["xp"], row["level"]
+    p.max_hp, p.max_sp, p.max_ep = row["max_hp"], row["max_sp"], row["max_ep"]
+    p.current_hp = min(p.max_hp, p.current_hp + gain)
+    p.current_sp = min(p.max_sp, p.current_sp + gain)
+    p.current_ep = min(p.max_ep, p.current_ep + gain)
+    p.dirty = True  # current values persist through the normal flush
+
     await connection.send(f"You advance to level {p.level}!")
+    await connection.send(f"You gain {gain} HP, {gain} SP, and {gain} EP.")

@@ -8,6 +8,8 @@ from connection import Connection
 from registry import registry
 import guilds
 from roles import *
+import logging
+log = logging.getLogger(__name__)
 
 HEADERS = ("Name", "Gender", "Race", "Guild", "Title")
 
@@ -51,6 +53,13 @@ async def cmd_who(connection: Connection, args: str) -> None:
         )
         for p in players
     ]
+
+    from roles import ROLES  # temporary
+    for p in players:
+        log.warning(
+            "who debug: %s guild_id=%r roles=%r names=%r registry=%r",
+            p.name, p.guild_id, p.roles, role_names(p.roles), list(ROLES),
+        )
 
     col_w = [max([len(h)] + [len(r[i]) for r in rows]) for i, h in enumerate(HEADERS)]
 

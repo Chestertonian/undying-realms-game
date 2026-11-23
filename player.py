@@ -80,41 +80,50 @@ async def name_is_taken(name: str) -> bool:
     return row is not None
 
 
+_PLAYER_COLUMNS = (
+    "id, account_id, name, race, gender, background, stats, current_room_id, "
+    "created_at, current_hp, max_hp, current_sp, max_sp, current_ep, max_ep, "
+    "guild_id, is_staff, xp, level"
+)
+
+
+async def _load_roles(pool, player_ids: list[int]) -> dict[int, set[str]]:
+    roles: dict[int, set[str]] = {pid: set() for pid in player_ids}
+    if not player_ids:
+        return roles
+    rows = await pool.fetch(
+        "SELECT player_id, role FROM player_roles WHERE player_id = ANY($1::int[])",
+        player_ids,
+    )
+    for r in rows:
+        roles[r["player_id"]].add(r["role"])
+    return roles
+
+
 async def load_characters_for_account(account_id: int) -> list[Player]:
     pool = db.get_pool()
     rows = await pool.fetch(
-        "SELECT id, account_id, name, race, gender, background, stats, current_room_id, "
-        "created_at, current_hp, max_hp, current_sp, max_sp, current_ep, max_ep, guild_id, is_staff, xp, level "
-        "FROM players WHERE account_id = $1 ORDER BY created_at",
+        f"SELECT {_PLAYER_COLUMNS} FROM players "
+        "WHERE account_id = $1 ORDER BY created_at",
         account_id,
     )
-    return [Player(**dict(row)) for row in rows]
+    players = [Player(**dict(row)) for row in rows]
+    roles = await _load_roles(pool, [p.id for p in players])
+    for p in players:
+        p.roles = roles[p.id]
+    return players
 
 
 async def load_player(player_id: int) -> Player | None:
     pool = db.get_pool()
     row = await pool.fetchrow(
-        "SELECT id, account_id, name, race, gender, background, stats, current_room_id, "
-        "created_at, current_hp, max_hp, current_sp, max_sp, current_ep, max_ep, "
-        "guild_id, is_staff, xp, level FROM players WHERE id = $1",
-        player_id,
+        f"SELECT {_PLAYER_COLUMNS} FROM players WHERE id = $1", player_id
     )
     if row is None:
         return None
     player = Player(**dict(row))
-    role_rows = await pool.fetch(
-        "SELECT role FROM player_roles WHERE player_id = $1", player_id
-    )
-    player.roles = {r["role"] for r in role_rows}
-    log.warning(
-        "load_player %s: guild_id=%r is_staff=%r roles=%r",
-        player.name,
-        player.guild_id,
-        player.is_staff,
-        player.roles,
-    )
+    player.roles = (await _load_roles(pool, [player_id]))[player_id]
     return player
-
 
 async def create_player(
     account_id: int,

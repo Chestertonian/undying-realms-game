@@ -197,3 +197,26 @@ def resolve_npc_target(raw: str, room_id: int) -> NpcInstance | None:
         return None
 
     return instances[result.id]
+
+async def spawn_npc(template_id: int, room_id: int) -> NpcInstance | None:
+    """Create a new instance of a template in a room. DB write first, then
+    the in-memory instance, so a failed insert leaves no phantom NPC.
+    Returns None if the template doesn't exist."""
+    template = templates.get(template_id)
+    if template is None:
+        return None
+    row = await get_pool().fetchrow(
+        "INSERT INTO npc_instances (template_id, room_id, current_hp) "
+        "VALUES ($1, $2, $3) RETURNING id",
+        template_id,
+        room_id,
+        template.max_hp,
+    )
+    instance = NpcInstance(
+        id=row["id"],
+        template_id=template_id,
+        room_id=room_id,
+        current_hp=template.max_hp,
+    )
+    instances[instance.id] = instance
+    return instance

@@ -16,7 +16,7 @@ from registry import registry
 
 from social import cmd_say, cmd_emote
 from channels import cmd_chat, cmd_warrior, cmd_staff, cmd_world
-from staff import cmd_grant, cmd_revoke
+from staff import cmd_grant, cmd_revoke, cmd_summon
 from movement import MOVEMENT_COMMANDS
 from info import cmd_who, cmd_hp, cmd_score
 from items import cmd_get, cmd_drop, cmd_give, cmd_inventory
@@ -25,6 +25,7 @@ from guilds import cmd_join
 import items
 from dialogue import cmd_ask
 import combat
+
 
 from rooms import describe_room_to, resolve_look_target
 
@@ -116,6 +117,7 @@ COMMAND_TABLE: dict[str, CommandHandler] = {
     "world": cmd_world,
     "grant": cmd_grant,
     "revoke": cmd_revoke,
+    "summon":   cmd_summon,
     **MOVEMENT_COMMANDS,
 }
 

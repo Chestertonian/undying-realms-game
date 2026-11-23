@@ -13,6 +13,8 @@ from connection import Connection
 from guilds import in_guild
 from registry import registry
 from roles import ROLES, find_role
+import npcs
+from rooms import broadcast_to_room
 
 log = logging.getLogger(__name__)
 
@@ -141,3 +143,25 @@ async def cmd_revoke(connection: Connection, args: str) -> None:
     )
     await connection.send(f"You revoke the {role.name} role from {target.name}.")
     await target_conn.send(f"Your {role.name} role has been revoked.")
+
+@staff_only
+async def cmd_summon(connection: Connection, args: str) -> None:
+    try:
+        template_id = int(args.strip())
+    except ValueError:
+        await connection.send("Summon what? (summon <template number>)")
+        return
+
+    room_id = connection.player.current_room_id
+    instance = await npcs.spawn_npc(template_id, room_id)
+    if instance is None:
+        await connection.send(f"There is no NPC template numbered {template_id}.")
+        return
+
+    log.info(
+        "staff %s (id %d) summoned template %d (instance %d) in room %d",
+        connection.player.name, connection.player.id,
+        template_id, instance.id, room_id,
+    )
+    name = npcs.npc_name(instance)
+    await broadcast_to_room(room_id, f"In a cloud of cosmic dust motes, {name[0].upper()}{name[1:]} appears!")

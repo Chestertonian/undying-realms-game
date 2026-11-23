@@ -30,6 +30,7 @@ class NpcTemplate:
     keywords: list[str]
     plural: str | None
     max_hp: int
+    xp_value: int
     effective_keywords: list[str] = field(default_factory=list)
     effective_plural: str = ""
 
@@ -72,7 +73,7 @@ async def load_npcs() -> None:
 
     async with pool.acquire() as conn:
         template_rows = await conn.fetch(
-            "SELECT id, name, description, keywords, plural, max_hp "
+            "SELECT id, name, description, keywords, plural, max_hp, xp_value "
             "FROM npc_templates"
         )
         instance_rows = await conn.fetch(
@@ -90,6 +91,7 @@ async def load_npcs() -> None:
             keywords=list(row["keywords"]),
             plural=row["plural"],
             max_hp=row["max_hp"],
+            xp_value=row["xp_value"]
         )
         template.effective_keywords = _resolve_effective_keywords(template)
         template.effective_plural = pluralize(template.name, template.plural)

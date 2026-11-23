@@ -31,6 +31,7 @@ def _count_word(n: int) -> str:
 
 
 async def cmd_who(connection: Connection, args: str) -> None:
+    #TODO - titles not showing up
     players = sorted(
         (
             conn.player
@@ -101,6 +102,8 @@ async def cmd_score(connection: Connection, args: str) -> None:
         row("Gender:", p.gender.capitalize()),
         row("Background:", p.background),
         *guild_rows,
+        row("Level:", str(p.level)),
+        row("XP:", str(p.xp)),
         "-" * width,
         row("STR:", str(p.stats["STR"])),
         row("DEX:", str(p.stats["DEX"])),

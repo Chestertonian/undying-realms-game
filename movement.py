@@ -102,5 +102,7 @@ async def move_entity(actor: EntityRef, destination: "Room") -> None:
     player.dirty = True
     adjust_current_ep(player, -2)
 
+    #TODO Block movement if adjust_current_ep would bring player < 0.
+
     await broadcast_to_room(destination.id, f"{player.name} arrives.", exclude=[connection])
     await describe_room_to(connection, destination)

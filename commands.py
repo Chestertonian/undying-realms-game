@@ -20,6 +20,7 @@ from staff import cmd_grant, cmd_revoke
 from movement import MOVEMENT_COMMANDS
 from info import cmd_who, cmd_hp, cmd_score
 from items import cmd_get, cmd_drop, cmd_give, cmd_inventory
+from progression import cmd_advance
 from guilds import cmd_join
 import items
 from dialogue import cmd_ask
@@ -107,6 +108,7 @@ COMMAND_TABLE: dict[str, CommandHandler] = {
     "inventory": cmd_inventory,
     "inv": cmd_inventory,
     "i": cmd_inventory,
+    "advance":  cmd_advance,
     "join": cmd_join,
     "warrior": cmd_warrior,
     "staff": cmd_staff,

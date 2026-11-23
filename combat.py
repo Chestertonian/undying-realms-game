@@ -34,6 +34,7 @@ import random
 import registry
 from rooms import *
 from typing import Literal, TYPE_CHECKING
+from progression import *
 
 if TYPE_CHECKING:
     from player import Player
@@ -306,6 +307,7 @@ async def _resolve_tick() -> None:
     # 1. Snapshot current_target at tick start — one pass, no mid-tick mutation.
     snapshot = list(current_target.items())
     dead: set[EntityRef] = set()
+    killers: dict[EntityRef, EntityRef] = {}
 
     log.debug("combat tick: resolving %d active target(s)", len(snapshot))
 
@@ -344,6 +346,7 @@ async def _resolve_tick() -> None:
                 "combat tick: %s has been reduced to %d hp and will die", target, hp
             )
             dead.add(target)
+            killers[target] = attacker
 
     # 3. Death pass — after full damage pass, using post-damage HP.
     for entity in dead:
@@ -352,6 +355,13 @@ async def _resolve_tick() -> None:
         # return nothing if called after.
         death_room_id = _room_id(entity)
         death_name = _display_name(entity)
+
+        xp_award = 0
+        if entity[0] == "npc":
+            inst = npcs.instances.get(entity[1])
+            if inst is not None:
+                xp_award = npcs.templates[inst.template_id].xp_value
+
 
         log.info(
             "combat tick: %s (%s) dies in room %s", entity, death_name, death_room_id
@@ -372,6 +382,10 @@ async def _resolve_tick() -> None:
             await registry.broadcast_to_all(
                 f"\n   \033[0;31m<< The blood of {capitalized} has been spilled. >>\033[0m   \n"
             )
+        
+        killer = killers.get(entity)
+        if xp_award > 0 and killer is not None and killer[0] == "player":
+            await award_xp(killer[1], xp_award)
 
     # 4. Reassignment pass — absent current_target with a present alternative.
     for attacker, target in list(current_target.items()):

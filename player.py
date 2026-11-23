@@ -48,6 +48,8 @@ class Player:
     max_ep: int
     guild_id: int | None = None
     is_staff: bool = False
+    xp: int = 0
+    level: int = 1
     roles: set[str] = field(default_factory=set)
     dirty: bool = False
 
@@ -82,7 +84,7 @@ async def load_characters_for_account(account_id: int) -> list[Player]:
     pool = db.get_pool()
     rows = await pool.fetch(
         "SELECT id, account_id, name, race, gender, background, stats, current_room_id, "
-        "created_at, current_hp, max_hp, current_sp, max_sp, current_ep, max_ep, guild_id, is_staff "
+        "created_at, current_hp, max_hp, current_sp, max_sp, current_ep, max_ep, guild_id, is_staff, xp, level "
         "FROM players WHERE account_id = $1 ORDER BY created_at",
         account_id,
     )
@@ -94,7 +96,7 @@ async def load_player(player_id: int) -> Player | None:
     row = await pool.fetchrow(
         "SELECT id, account_id, name, race, gender, background, stats, current_room_id, "
         "created_at, current_hp, max_hp, current_sp, max_sp, current_ep, max_ep, "
-        "guild_id, is_staff FROM players WHERE id = $1",
+        "guild_id, is_staff, xp, level FROM players WHERE id = $1",
         player_id,
     )
     if row is None:
